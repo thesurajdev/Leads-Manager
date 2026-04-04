@@ -1,0 +1,48 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Leads - Sales CRM</title>
+  <link rel="stylesheet" href="css/style.css" />
+</head>
+<body>
+  <div class="container">
+    <h1>Leads List</h1>
+
+    <div class="nav-links">
+      <a href="index.html">Home</a>
+      <a href="dashboard.html">Dashboard</a>
+      <a href="add-lead.html">Add New Lead</a>
+    </div>
+
+    <div style="margin-top: 20px;">
+      <input type="text" id="searchInput" placeholder="Search by customer, phone, source, owner..." />
+    </div>
+
+    <div class="table-wrapper">
+      <table>
+        <thead>
+          <tr>
+            <th>Lead ID</th>
+            <th>Date</th>
+            <th>Customer</th>
+            <th>Contact</th>
+            <th>Lead Source</th>
+            <th>Product</th>
+            <th>Lead Owner</th>
+            <th>Status</th>
+            <th>Lead Status</th>
+            <th>Order Value</th>
+            <th>Actions</th>
+          </tr>
+        </thead>
+        <tbody id="leadsTableBody"></tbody>
+      </table>
+    </div>
+  </div>
+
+  <script src="js/data.js"></script>
+  <script src="js/leads.js"></script>
+</body>
+</html>
