@@ -19,13 +19,13 @@ form.addEventListener("submit", async function (e) {
     console.log("Existing leads:", existingLeadsRaw);
 
     const existingLeads = existingLeadsRaw.map((lead) => ({
-      lead_id: lead["Lead ID"],
-      customer_name: lead["Customer Name"],
-      contact_no: lead["Contact No."],
-      email: lead["Email ID"],
-      lead_owner: lead["Lead Owner"],
-      status: lead["Status"],
-      lead_status: lead["Lead Status"]
+      lead_id: String(lead["Lead ID"] || ""),
+      customer_name: String(lead["Customer Name"] || ""),
+      contact_no: String(lead["Contact No."] || ""),
+      email: String(lead["Email ID"] || ""),
+      lead_owner: String(lead["Lead Owner"] || ""),
+      status: String(lead["Status"] || ""),
+      lead_status: String(lead["Lead Status"] || "")
     }));
 
     const duplicate = existingLeads.find((lead) => {
