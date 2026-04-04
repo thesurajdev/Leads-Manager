@@ -3,49 +3,50 @@
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>Add Lead - CRM</title>
+  <title>Add / Edit Lead - CRM</title>
   <link rel="stylesheet" href="css/style.css" />
 </head>
 <body>
   <div class="container">
-    <h1>Add New Lead</h1>
+    <h1 id="pageTitle">Add New Lead</h1>
 
     <div class="nav-links">
       <a href="index.html">Home</a>
+      <a href="dashboard.html">Dashboard</a>
       <a href="leads.html">View Leads</a>
+      <a href="followups.html">Follow-ups</a>
     </div>
 
     <form id="leadForm">
-
       <label>Customer Name</label>
       <input type="text" id="customer_name" required />
 
       <label>Contact No.</label>
       <input type="text" id="contact_no" required />
 
-      <label>Email</label>
+      <label>Email ID</label>
       <input type="email" id="email" />
 
       <label>Lead Source</label>
-      <input type="text" id="lead_source" />
+      <select id="lead_source" required>
+        <option value="">Loading...</option>
+      </select>
 
       <label>Product Category</label>
-      <input type="text" id="product_category" />
+      <select id="product_category" required>
+        <option value="">Loading...</option>
+      </select>
 
       <label>Lead Owner</label>
       <input type="text" id="lead_owner" readonly />
 
       <label>Status</label>
-      <select id="status">
-        <option>New</option>
-        <option>Follow-up</option>
-        <option>Interested</option>
-        <option>Won</option>
-        <option>Lost</option>
+      <select id="status" required>
+        <option value="">Loading...</option>
       </select>
 
       <label>Remarks</label>
-      <textarea id="remarks"></textarea>
+      <textarea id="remarks" rows="4"></textarea>
 
       <button type="submit" id="saveLeadBtn">Save Lead</button>
     </form>
