@@ -104,15 +104,28 @@ form.addEventListener("submit", async function (e) {
     console.log("Save result:", result);
 
     if (result.success) {
-      alert("Lead added successfully!");
-      window.location.href = "leads.html";
-    } else {
-      alert("Failed to save lead.\n\n" + JSON.stringify(result));
-
-      saveLeadBtn.disabled = false;
-      saveLeadBtn.innerText = "Save Lead";
-      isSubmitting = false;
-    }
+        alert("Lead added successfully!");
+        window.location.href = "leads.html";
+      } else if (result.duplicate) {
+        alert(
+          `Duplicate Lead Found!\n\n` +
+          `Customer: ${result.duplicate_data.customer_name}\n` +
+          `Lead ID: ${result.duplicate_data.lead_id}\n` +
+          `Owner: ${result.duplicate_data.lead_owner}\n` +
+          `Current Status: ${result.duplicate_data.status}\n\n` +
+          `This lead is already OPEN and cannot be added again.`
+        );
+      
+        saveLeadBtn.disabled = false;
+        saveLeadBtn.innerText = "Save Lead";
+        isSubmitting = false;
+      } else {
+        alert("Failed to save lead.\n\n" + JSON.stringify(result));
+      
+        saveLeadBtn.disabled = false;
+        saveLeadBtn.innerText = "Save Lead";
+        isSubmitting = false;
+      }
 
   } catch (error) {
     console.error("REAL ERROR:", error);
