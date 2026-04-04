@@ -117,3 +117,69 @@ function editLead(leadId) {
   localStorage.setItem("editLeadId", leadId);
   window.location.href = "add-lead.html";
 }
+
+async function reassignLead(leadId, currentOwner) {
+  const allowedAgents = [
+    "Anjali",
+    "Pragati",
+    "Payal",
+    "Hira",
+    "Agent 5",
+    "Agent 6",
+    "Agent 7",
+    "Agent 8",
+    "Agent 9",
+    "Agent 10"
+  ];
+
+  const newOwner = prompt(
+    `Current Owner: ${currentOwner}\n\nEnter new agent name exactly as below:\n\n${allowedAgents.join(", ")}`
+  );
+
+  if (!newOwner) return;
+
+  if (!allowedAgents.includes(newOwner.trim())) {
+    alert("Invalid agent name. Please enter a valid agent exactly.");
+    return;
+  }
+
+  if (newOwner.trim() === currentOwner.trim()) {
+    alert("This lead is already assigned to that agent.");
+    return;
+  }
+
+  const confirmMove = confirm(
+    `Are you sure you want to reassign Lead ${leadId} from ${currentOwner} to ${newOwner}?`
+  );
+
+  if (!confirmMove) return;
+
+  try {
+    const payload = {
+      type: "reassignLead",
+      lead_id: leadId,
+      new_owner: newOwner.trim(),
+      requested_by: loggedInUser
+    };
+
+    const res = await fetch(API_URL, {
+      method: "POST",
+      body: JSON.stringify(payload)
+    });
+
+    const result = await res.json();
+
+    if (result.success) {
+      alert(`Lead reassigned successfully to ${newOwner}!`);
+      fetchLeads();
+    } else if (result.permission_denied) {
+      alert("Permission denied. Only Manager/Admin can reassign leads.");
+    } else {
+      alert("Failed to reassign lead.\n\n" + JSON.stringify(result));
+    }
+
+  } catch (error) {
+    console.error("Reassign error:", error);
+    alert("Error reassigning lead.");
+  }
+}
