@@ -1,8 +1,40 @@
-let leads = JSON.parse(localStorage.getItem("leads")) || [];
-let filteredLeads = [...leads];
+let leads = [];
+let filteredLeads = [];
 
 const leadsTableBody = document.getElementById("leadsTableBody");
 const searchInput = document.getElementById("searchInput");
+
+async function fetchLeads() {
+  try {
+    const res = await fetch(API_URL);
+    leads = await res.json();
+
+    // Normalize field names from Google Sheet
+    leads = leads.map((lead, index) => ({
+      id: index + 1,
+      lead_id: lead["Lead ID"],
+      date: lead["Created Date"],
+      lead_owner: lead["Lead Owner"],
+      customer_name: lead["Customer Name"],
+      contact_no: lead["Contact No."],
+      email: lead["Email ID"],
+      lead_source: lead["Lead Source"],
+      product_category: lead["Product Category"],
+      status: lead["Status"],
+      remarks: lead["Remarks"],
+      lead_status: lead["Lead Status"],
+      order_value: lead["Order Value"] || 0
+    }));
+
+    filteredLeads = [...leads];
+    renderLeads(filteredLeads);
+  } catch (error) {
+    console.error("Error loading leads:", error);
+    leadsTableBody.innerHTML = `
+      <tr><td colspan="11" style="text-align:center;">Failed to load leads.</td></tr>
+    `;
+  }
+}
 
 function getStatusBadge(status) {
   if (status === "New") return `<span class="badge new">New</span>`;
@@ -38,34 +70,12 @@ function renderLeads(data) {
         <td>${lead.lead_status || "-"}</td>
         <td>₹ ${lead.order_value || 0}</td>
         <td>
-          <button onclick="viewLead(${lead.id})">View</button>
-          <button onclick="editLead(${lead.id})" style="margin-top:6px;background:#16a34a;">Edit</button>
-          <button onclick="deleteLead(${lead.id})" style="margin-top:6px;background:#dc2626;">Delete</button>
+          <button onclick="alert('Lead detail page will be connected next')">View</button>
         </td>
       </tr>
     `;
     leadsTableBody.innerHTML += row;
   });
-}
-
-function viewLead(id) {
-  localStorage.setItem("selectedLeadId", id);
-  window.location.href = "lead-detail.html";
-}
-
-function editLead(id) {
-  localStorage.setItem("editLeadId", id);
-  window.location.href = "add-lead.html";
-}
-
-function deleteLead(id) {
-  const confirmDelete = confirm("Are you sure you want to delete this lead?");
-  if (!confirmDelete) return;
-
-  leads = leads.filter((lead) => lead.id !== id);
-  localStorage.setItem("leads", JSON.stringify(leads));
-  filteredLeads = [...leads];
-  renderLeads(filteredLeads);
 }
 
 searchInput.addEventListener("input", function () {
@@ -81,4 +91,4 @@ searchInput.addEventListener("input", function () {
   renderLeads(filteredLeads);
 });
 
-renderLeads(filteredLeads);
+fetchLeads();
