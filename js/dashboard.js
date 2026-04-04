@@ -1,5 +1,4 @@
 let leads = [];
-let followups = [];
 
 const dashboardCards = document.getElementById("dashboardCards");
 const loggedInUser = localStorage.getItem("loggedInUser");
@@ -12,7 +11,6 @@ const today = new Date().toISOString().split("T")[0];
 
 async function loadDashboardData() {
   try {
-    // Load leads
     const leadsRes = await fetch(API_URL);
     const leadsRaw = await leadsRes.json();
 
@@ -33,24 +31,6 @@ async function loadDashboardData() {
       next_followup_date: String(lead["Next Follow-up Date"] || "")
     }));
 
-    // Optional followup load (future use if needed)
-    const followRes = await fetch(API_URL + "?action=followups");
-    const followRaw = await followRes.json();
-
-    followups = followRaw.map((f) => ({
-      followup_id: String(f["Followup ID"] || ""),
-      lead_id: String(f["Lead ID"] || ""),
-      customer_name: String(f["Customer Name"] || ""),
-      contact_no: String(f["Contact No."] || ""),
-      followup_date: String(f["Follow-up Date"] || ""),
-      followup_type: String(f["Follow-up Type"] || ""),
-      followup_status: String(f["Follow-up Status"] || ""),
-      remarks: String(f["Remarks"] || ""),
-      next_followup_date: String(f["Next Follow-up Date"] || ""),
-      created_by: String(f["Created By"] || ""),
-      created_timestamp: String(f["Created Timestamp"] || "")
-    }));
-
     renderDashboard();
   } catch (error) {
     console.error("Dashboard load error:", error);
@@ -61,7 +41,7 @@ async function loadDashboardData() {
 function renderDashboard() {
   let visibleLeads = [...leads];
 
-  // 🔥 Role-based filtering
+  // Role-based filtering
   if (loggedInUser !== "Manager" && loggedInUser !== "Admin") {
     visibleLeads = visibleLeads.filter((lead) => lead.lead_owner === loggedInUser);
   }
@@ -70,15 +50,19 @@ function renderDashboard() {
   const openLeads = visibleLeads.filter(l => l.lead_status === "Open").length;
   const wonLeads = visibleLeads.filter(l => l.status === "Won").length;
   const lostLeads = visibleLeads.filter(l => l.status === "Lost").length;
+
   const todayFollowups = visibleLeads.filter(
     l => l.lead_status === "Open" && l.next_followup_date === today
   ).length;
+
   const overdueFollowups = visibleLeads.filter(
     l => l.lead_status === "Open" && l.next_followup_date && l.next_followup_date < today
   ).length;
+
   const upcomingFollowups = visibleLeads.filter(
     l => l.lead_status === "Open" && l.next_followup_date && l.next_followup_date > today
   ).length;
+
   const totalRevenue = visibleLeads
     .filter(l => l.status === "Won")
     .reduce((sum, l) => sum + (l.order_value || 0), 0);
