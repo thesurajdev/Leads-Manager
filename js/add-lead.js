@@ -1,4 +1,6 @@
 const form = document.getElementById("leadForm");
+const saveLeadBtn = document.getElementById("saveLeadBtn");
+
 const loggedInUser = localStorage.getItem("loggedInUser");
 
 if (!loggedInUser) {
@@ -7,8 +9,17 @@ if (!loggedInUser) {
 
 document.getElementById("lead_owner").value = loggedInUser;
 
+// Prevent multiple clicks
+let isSubmitting = false;
+
 form.addEventListener("submit", async function (e) {
   e.preventDefault();
+
+  if (isSubmitting) return; // 🚫 stop repeated submit
+  isSubmitting = true;
+
+  saveLeadBtn.disabled = true;
+  saveLeadBtn.innerText = "Saving...";
 
   const customer_name = document.getElementById("customer_name").value.trim();
   const contact_no = document.getElementById("contact_no").value.trim();
@@ -23,7 +34,6 @@ form.addEventListener("submit", async function (e) {
     console.log("Fetching existing leads...");
     const existingRes = await fetch(API_URL);
     const existingLeadsRaw = await existingRes.json();
-    console.log("Existing leads:", existingLeadsRaw);
 
     const existingLeads = existingLeadsRaw.map((lead) => ({
       lead_id: String(lead["Lead ID"] || ""),
@@ -35,15 +45,16 @@ form.addEventListener("submit", async function (e) {
       lead_status: String(lead["Lead Status"] || "")
     }));
 
+    // 🔴 Duplicate check (only OPEN leads)
     const duplicate = existingLeads.find((lead) => {
       const samePhone =
         String(lead.contact_no || "").trim() === String(contact_no || "").trim();
-    
+
       const sameEmail =
         email &&
         String(lead.email || "").trim().toLowerCase() ===
           String(email || "").trim().toLowerCase();
-    
+
       return (samePhone || sameEmail) && lead.lead_status === "Open";
     });
 
@@ -56,6 +67,10 @@ form.addEventListener("submit", async function (e) {
         `Current Status: ${duplicate.status}\n\n` +
         `This lead is already OPEN and cannot be added again.`
       );
+
+      saveLeadBtn.disabled = false;
+      saveLeadBtn.innerText = "Save Lead";
+      isSubmitting = false;
       return;
     }
 
@@ -93,10 +108,18 @@ form.addEventListener("submit", async function (e) {
       window.location.href = "leads.html";
     } else {
       alert("Failed to save lead.\n\n" + JSON.stringify(result));
+
+      saveLeadBtn.disabled = false;
+      saveLeadBtn.innerText = "Save Lead";
+      isSubmitting = false;
     }
 
   } catch (error) {
     console.error("REAL ERROR:", error);
     alert("Real Error:\n\n" + error.message);
+
+    saveLeadBtn.disabled = false;
+    saveLeadBtn.innerText = "Save Lead";
+    isSubmitting = false;
   }
 });
