@@ -29,11 +29,14 @@ form.addEventListener("submit", async function (e) {
     }));
 
     const duplicate = existingLeads.find((lead) => {
-      const samePhone = (lead.contact_no || "").trim() === contact_no;
+      const samePhone =
+        String(lead.contact_no || "").trim() === String(contact_no || "").trim();
+    
       const sameEmail =
         email &&
-        (lead.email || "").trim().toLowerCase() === email.toLowerCase();
-
+        String(lead.email || "").trim().toLowerCase() ===
+          String(email || "").trim().toLowerCase();
+    
       return (samePhone || sameEmail) && lead.lead_status === "Open";
     });
 
