@@ -1,4 +1,11 @@
 const form = document.getElementById("leadForm");
+const loggedInUser = localStorage.getItem("loggedInUser");
+
+if (!loggedInUser) {
+  window.location.href = "login.html";
+}
+
+document.getElementById("lead_owner").value = loggedInUser;
 
 form.addEventListener("submit", async function (e) {
   e.preventDefault();
