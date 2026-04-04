@@ -109,6 +109,11 @@ form.addEventListener("submit", async function (e) {
         localStorage.removeItem("editLeadId");
         window.location.href = "leads.html";
         return;
+      } else if (result.permission_denied) {
+        alert("Permission denied. You can only edit your own leads.");
+        localStorage.removeItem("editLeadId");
+        window.location.href = "leads.html";
+        return;
       } else {
         alert("Failed to update lead.\n\n" + JSON.stringify(result));
       }
