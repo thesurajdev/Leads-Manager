@@ -81,6 +81,11 @@ function renderLeads(data) {
         <td>
           <button onclick="viewLead(${lead.id})">View</button>
           <button onclick="editLead('${lead.lead_id}')" style="margin-top:6px;background:#16a34a;">Edit</button>
+          ${
+            loggedInUser === "Manager" || loggedInUser === "Admin"
+              ? `<button onclick="reassignLead('${lead.lead_id}', '${lead.lead_owner}')" style="margin-top:6px;background:#f59e0b;">Reassign</button>`
+              : ""
+          }
         </td>
       </tr>
     `;
