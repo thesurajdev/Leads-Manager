@@ -2,6 +2,7 @@ const form = document.getElementById("leadForm");
 const saveLeadBtn = document.getElementById("saveLeadBtn");
 
 const loggedInUser = localStorage.getItem("loggedInUser");
+const editLeadId = localStorage.getItem("editLeadId");
 
 if (!loggedInUser) {
   window.location.href = "login.html";
@@ -9,17 +10,51 @@ if (!loggedInUser) {
 
 document.getElementById("lead_owner").value = loggedInUser;
 
-// Prevent multiple clicks
 let isSubmitting = false;
+let isEditMode = false;
+
+if (editLeadId) {
+  isEditMode = true;
+  loadLeadForEdit(editLeadId);
+}
+
+async function loadLeadForEdit(leadId) {
+  try {
+    const res = await fetch(API_URL);
+    const rawLeads = await res.json();
+
+    const lead = rawLeads.find((item) => String(item["Lead ID"]) === String(leadId));
+
+    if (!lead) {
+      alert("Lead not found for editing.");
+      localStorage.removeItem("editLeadId");
+      return;
+    }
+
+    document.getElementById("customer_name").value = lead["Customer Name"] || "";
+    document.getElementById("contact_no").value = lead["Contact No."] || "";
+    document.getElementById("email").value = lead["Email ID"] || "";
+    document.getElementById("lead_source").value = lead["Lead Source"] || "";
+    document.getElementById("product_category").value = lead["Product Category"] || "";
+    document.getElementById("lead_owner").value = lead["Lead Owner"] || "";
+    document.getElementById("status").value = lead["Status"] || "New";
+    document.getElementById("remarks").value = lead["Remarks"] || "";
+
+    saveLeadBtn.innerText = "Update Lead";
+  } catch (error) {
+    console.error("Error loading lead for edit:", error);
+    alert("Failed to load lead data.");
+  }
+}
 
 form.addEventListener("submit", async function (e) {
   e.preventDefault();
 
-  if (isSubmitting) return; // 🚫 stop repeated submit
+  if (isSubmitting) return;
   isSubmitting = true;
 
   saveLeadBtn.disabled = true;
-  saveLeadBtn.innerText = "Saving...";
+  saveLeadBtn.innerText = isEditMode ? "Updating..." : "Saving...";
 
   const customer_name = document.getElementById("customer_name").value.trim();
   const contact_no = document.getElementById("contact_no").value.trim();
@@ -31,7 +66,44 @@ form.addEventListener("submit", async function (e) {
   const remarks = document.getElementById("remarks").value.trim();
 
   try {
-    console.log("Fetching existing leads...");
+    // 🔥 EDIT MODE
+    if (isEditMode) {
+      const updatePayload = {
+        type: "updateLead",
+        lead_id: editLeadId,
+        lead_owner,
+        customer_name,
+        contact_no,
+        email_id: email,
+        lead_source,
+        product_category,
+        status,
+        remarks
+      };
+
+      const res = await fetch(API_URL, {
+        method: "POST",
+        body: JSON.stringify(updatePayload)
+      });
+
+      const result = await res.json();
+
+      if (result.success) {
+        alert("Lead updated successfully!");
+        localStorage.removeItem("editLeadId");
+        window.location.href = "leads.html";
+        return;
+      } else {
+        alert("Failed to update lead.\n\n" + JSON.stringify(result));
+      }
+
+      saveLeadBtn.disabled = false;
+      saveLeadBtn.innerText = "Update Lead";
+      isSubmitting = false;
+      return;
+    }
+
+    // 🔥 ADD NEW MODE
     const existingRes = await fetch(API_URL);
     const existingLeadsRaw = await existingRes.json();
 
@@ -45,7 +117,6 @@ form.addEventListener("submit", async function (e) {
       lead_status: String(lead["Lead Status"] || "")
     }));
 
-    // 🔴 Duplicate check (only OPEN leads)
     const duplicate = existingLeads.find((lead) => {
       const samePhone =
         String(lead.contact_no || "").trim() === String(contact_no || "").trim();
@@ -93,46 +164,43 @@ form.addEventListener("submit", async function (e) {
       next_followup_date: ""
     };
 
-    console.log("Saving lead:", newLead);
-
     const res = await fetch(API_URL, {
       method: "POST",
       body: JSON.stringify(newLead)
     });
 
     const result = await res.json();
-    console.log("Save result:", result);
 
     if (result.success) {
-        alert("Lead added successfully!");
-        window.location.href = "leads.html";
-      } else if (result.duplicate) {
-        alert(
-          `Duplicate Lead Found!\n\n` +
-          `Customer: ${result.duplicate_data.customer_name}\n` +
-          `Lead ID: ${result.duplicate_data.lead_id}\n` +
-          `Owner: ${result.duplicate_data.lead_owner}\n` +
-          `Current Status: ${result.duplicate_data.status}\n\n` +
-          `This lead is already OPEN and cannot be added again.`
-        );
-      
-        saveLeadBtn.disabled = false;
-        saveLeadBtn.innerText = "Save Lead";
-        isSubmitting = false;
-      } else {
-        alert("Failed to save lead.\n\n" + JSON.stringify(result));
-      
-        saveLeadBtn.disabled = false;
-        saveLeadBtn.innerText = "Save Lead";
-        isSubmitting = false;
-      }
+      alert("Lead added successfully!");
+      window.location.href = "leads.html";
+    } else if (result.duplicate) {
+      alert(
+        `Duplicate Lead Found!\n\n` +
+        `Customer: ${result.duplicate_data.customer_name}\n` +
+        `Lead ID: ${result.duplicate_data.lead_id}\n` +
+        `Owner: ${result.duplicate_data.lead_owner}\n` +
+        `Current Status: ${result.duplicate_data.status}\n\n` +
+        `This lead is already OPEN and cannot be added again.`
+      );
+
+      saveLeadBtn.disabled = false;
+      saveLeadBtn.innerText = "Save Lead";
+      isSubmitting = false;
+    } else {
+      alert("Failed to save lead.\n\n" + JSON.stringify(result));
+
+      saveLeadBtn.disabled = false;
+      saveLeadBtn.innerText = "Save Lead";
+      isSubmitting = false;
+    }
 
   } catch (error) {
     console.error("REAL ERROR:", error);
     alert("Real Error:\n\n" + error.message);
 
     saveLeadBtn.disabled = false;
-    saveLeadBtn.innerText = "Save Lead";
+    saveLeadBtn.innerText = isEditMode ? "Update Lead" : "Save Lead";
     isSubmitting = false;
   }
 });
