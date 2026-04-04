@@ -93,7 +93,8 @@ form.addEventListener("submit", async function (e) {
         lead_source,
         product_category,
         status,
-        remarks
+        remarks,
+        requested_by: loggedInUser
       };
 
       const res = await fetch(API_URL, {
