@@ -9,14 +9,29 @@
 <body>
   <div class="container">
     <h1>Sales CRM</h1>
-    <p>Welcome to your custom CRM system.</p>
+    <p id="welcomeUser">Welcome to your custom CRM system.</p>
 
     <div class="nav-links">
-      <a href="dashboard.html">Go to Dashboard</a>
+      <a href="dashboard.html">Dashboard</a>
       <a href="leads.html">View Leads</a>
       <a href="add-lead.html">Add New Lead</a>
       <a href="followups.html">Follow-ups</a>
+      <a href="login.html" onclick="logoutUser()">Logout</a>
     </div>
   </div>
+
+  <script>
+    const loggedInUser = localStorage.getItem("loggedInUser");
+
+    if (!loggedInUser) {
+      window.location.href = "login.html";
+    } else {
+      document.getElementById("welcomeUser").innerText = `Welcome, ${loggedInUser}`;
+    }
+
+    function logoutUser() {
+      localStorage.removeItem("loggedInUser");
+    }
+  </script>
 </body>
 </html>
