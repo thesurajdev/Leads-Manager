@@ -1,18 +1,68 @@
-let leads = JSON.parse(localStorage.getItem("leads")) || [];
-let followups = JSON.parse(localStorage.getItem("followups")) || [];
+let leads = [];
+let followups = [];
 
-const selectedLeadId = parseInt(localStorage.getItem("selectedLeadId"));
-const lead = leads.find((l) => l.id === selectedLeadId);
-
+const selectedLeadId = localStorage.getItem("selectedLeadId");
 const leadDetailBox = document.getElementById("leadDetailBox");
 const followupForm = document.getElementById("followupForm");
 const followupTableBody = document.getElementById("followupTableBody");
 
-if (!lead) {
-  leadDetailBox.innerHTML = "<p>Lead not found.</p>";
-} else {
-  renderLeadDetail();
-  renderFollowups();
+let lead = null;
+
+async function loadLeadAndFollowups() {
+  try {
+    // Load leads
+    const leadsRes = await fetch(API_URL);
+    const leadsRaw = await leadsRes.json();
+
+    leads = leadsRaw.map((item, index) => ({
+      id: index + 1,
+      lead_id: String(item["Lead ID"] || ""),
+      date: String(item["Created Date"] || ""),
+      lead_owner: String(item["Lead Owner"] || ""),
+      customer_name: String(item["Customer Name"] || ""),
+      contact_no: String(item["Contact No."] || ""),
+      email: String(item["Email ID"] || ""),
+      lead_source: String(item["Lead Source"] || ""),
+      product_category: String(item["Product Category"] || ""),
+      status: String(item["Status"] || ""),
+      remarks: String(item["Remarks"] || ""),
+      lead_status: String(item["Lead Status"] || ""),
+      order_value: Number(item["Order Value"] || 0)
+    }));
+
+    lead = leads.find((l) => String(l.id) === String(selectedLeadId));
+
+    if (!lead) {
+      leadDetailBox.innerHTML = "<p>Lead not found.</p>";
+      return;
+    }
+
+    renderLeadDetail();
+
+    // Load followups
+    const followRes = await fetch(API_URL + "?action=followups");
+    const followRaw = await followRes.json();
+
+    followups = followRaw.map((f) => ({
+      followup_id: String(f["Followup ID"] || ""),
+      lead_id: String(f["Lead ID"] || ""),
+      customer_name: String(f["Customer Name"] || ""),
+      contact_no: String(f["Contact No."] || ""),
+      followup_date: String(f["Follow-up Date"] || ""),
+      followup_type: String(f["Follow-up Type"] || ""),
+      followup_status: String(f["Follow-up Status"] || ""),
+      remarks: String(f["Remarks"] || ""),
+      next_followup_date: String(f["Next Follow-up Date"] || ""),
+      created_by: String(f["Created By"] || ""),
+      created_timestamp: String(f["Created Timestamp"] || "")
+    }));
+
+    renderFollowups();
+
+  } catch (error) {
+    console.error("Error loading lead/followups:", error);
+    leadDetailBox.innerHTML = "<p>Failed to load lead details.</p>";
+  }
 }
 
 function renderLeadDetail() {
@@ -61,8 +111,10 @@ function renderFollowups() {
   });
 }
 
-followupForm.addEventListener("submit", function (e) {
+followupForm.addEventListener("submit", async function (e) {
   e.preventDefault();
+
+  if (!lead) return;
 
   const followup_date = document.getElementById("followup_date").value;
   const followup_type = document.getElementById("followup_type").value;
@@ -71,7 +123,8 @@ followupForm.addEventListener("submit", function (e) {
   const next_followup_date = document.getElementById("next_followup_date").value;
 
   const newFollowup = {
-    id: Date.now(),
+    type: "followup",
+    followup_id: "FU-" + Date.now(),
     lead_id: lead.lead_id,
     customer_name: lead.customer_name,
     contact_no: lead.contact_no,
@@ -81,29 +134,29 @@ followupForm.addEventListener("submit", function (e) {
     remarks,
     next_followup_date,
     created_by: lead.lead_owner,
-    created_at: new Date().toLocaleString()
+    created_timestamp: new Date().toLocaleString()
   };
 
-  followups.push(newFollowup);
-  localStorage.setItem("followups", JSON.stringify(followups));
+  try {
+    const res = await fetch(API_URL, {
+      method: "POST",
+      body: JSON.stringify(newFollowup)
+    });
 
-  // Update lead main status and remarks
-  lead.status = followup_status;
-  lead.remarks = remarks;
+    const result = await res.json();
 
-  if (followup_status === "Won" || followup_status === "Lost") {
-    lead.lead_status = "Closed";
-  } else {
-    lead.lead_status = "Open";
+    if (result.success) {
+      alert("Follow-up added successfully!");
+      followupForm.reset();
+      loadLeadAndFollowups();
+    } else {
+      alert("Failed to save follow-up.");
+    }
+
+  } catch (error) {
+    console.error("Error saving follow-up:", error);
+    alert("Error saving follow-up.");
   }
-
-  const leadIndex = leads.findIndex((l) => l.id === lead.id);
-  leads[leadIndex] = lead;
-  localStorage.setItem("leads", JSON.stringify(leads));
-
-  followupForm.reset();
-  renderLeadDetail();
-  renderFollowups();
-
-  alert("Follow-up added successfully!");
 });
+
+loadLeadAndFollowups();
