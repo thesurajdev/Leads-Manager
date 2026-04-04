@@ -1,8 +1,6 @@
-let leads = JSON.parse(localStorage.getItem("leads")) || [];
-
 const form = document.getElementById("leadForm");
 
-form.addEventListener("submit", function (e) {
+form.addEventListener("submit", async function (e) {
   e.preventDefault();
 
   const customer_name = document.getElementById("customer_name").value.trim();
@@ -14,44 +12,40 @@ form.addEventListener("submit", function (e) {
   const status = document.getElementById("status").value;
   const remarks = document.getElementById("remarks").value.trim();
 
-  // 🔴 DUPLICATE CHECK (ONLY OPEN LEADS)
-  const duplicate = leads.find(
-    (lead) =>
-      (lead.contact_no === contact_no || (email && lead.email === email)) &&
-      lead.lead_status === "Open"
-  );
-
-  if (duplicate) {
-    alert(
-      `Lead already exists!\n\nCustomer: ${duplicate.customer_name}\nOwner: ${duplicate.lead_owner}\nStatus: ${duplicate.status}`
-    );
-    return;
-  }
-
-  // Generate Lead ID
-  const newId = leads.length ? leads[leads.length - 1].id + 1 : 1;
-  const leadId = "LD-" + String(newId).padStart(3, "0");
+  const lead_id = "LD-" + Date.now();
+  const created_date = new Date().toISOString().split("T")[0];
 
   const newLead = {
-    id: newId,
-    lead_id: leadId,
-    date: new Date().toISOString().split("T")[0],
+    lead_id,
+    created_date,
+    lead_owner,
     customer_name,
     contact_no,
-    email,
+    email_id: email,
     lead_source,
     product_category,
-    lead_owner,
     status,
     remarks,
     lead_status: "Open",
     order_value: 0
   };
 
-  leads.push(newLead);
-  localStorage.setItem("leads", JSON.stringify(leads));
+  try {
+    const res = await fetch(API_URL, {
+      method: "POST",
+      body: JSON.stringify(newLead)
+    });
 
-  alert("Lead added successfully!");
+    const result = await res.json();
 
-  window.location.href = "leads.html";
+    if (result.success) {
+      alert("Lead added successfully!");
+      window.location.href = "leads.html";
+    } else {
+      alert("Failed to save lead.");
+    }
+  } catch (error) {
+    console.error("Error saving lead:", error);
+    alert("Error saving lead.");
+  }
 });
