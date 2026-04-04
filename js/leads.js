@@ -233,3 +233,59 @@ async function reassignLead(leadId, currentOwner) {
     alert("Error reassigning lead.");
   }
 }
+
+function exportLeadsCSV() {
+  if (!filteredLeads || filteredLeads.length === 0) {
+    alert("No leads available to export.");
+    return;
+  }
+
+  const headers = [
+    "Lead ID",
+    "Created Date",
+    "Lead Owner",
+    "Customer Name",
+    "Contact No.",
+    "Email ID",
+    "Lead Source",
+    "Product Category",
+    "Status",
+    "Remarks",
+    "Lead Status",
+    "Order Value",
+    "Next Follow-up Date"
+  ];
+
+  const rows = filteredLeads.map(lead => [
+    lead.lead_id,
+    lead.date,
+    lead.lead_owner,
+    lead.customer_name,
+    lead.contact_no,
+    lead.email,
+    lead.lead_source,
+    lead.product_category,
+    lead.status,
+    lead.remarks,
+    lead.lead_status,
+    lead.order_value,
+    lead.next_followup_date
+  ]);
+
+  const csvContent = [
+    headers.join(","),
+    ...rows.map(row =>
+      row.map(value => `"${String(value || "").replace(/"/g, '""')}"`).join(",")
+    )
+  ].join("\n");
+
+  const blob = new Blob([csvContent], { type: "text/csv;charset=utf-8;" });
+  const url = URL.createObjectURL(blob);
+
+  const link = document.createElement("a");
+  link.setAttribute("href", url);
+  link.setAttribute("download", `leads_export_${new Date().toISOString().split("T")[0]}.csv`);
+  document.body.appendChild(link);
+  link.click();
+  document.body.removeChild(link);
+}
