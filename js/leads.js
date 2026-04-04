@@ -3,6 +3,11 @@ let filteredLeads = [];
 
 const leadsTableBody = document.getElementById("leadsTableBody");
 const searchInput = document.getElementById("searchInput");
+const loggedInUser = localStorage.getItem("loggedInUser");
+
+if (!loggedInUser) {
+  window.location.href = "login.html";
+}
 
 async function fetchLeads() {
   try {
@@ -24,6 +29,11 @@ async function fetchLeads() {
       lead_status: String(lead["Lead Status"] || ""),
       order_value: Number(lead["Order Value"] || 0)
     }));
+
+    // 🔥 Filter based on role
+    if (loggedInUser !== "Manager" && loggedInUser !== "Admin") {
+      leads = leads.filter((lead) => lead.lead_owner === loggedInUser);
+    }
 
     filteredLeads = [...leads];
     renderLeads(filteredLeads);
