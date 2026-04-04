@@ -2,14 +2,20 @@ let leads = [];
 let filteredLeads = [];
 
 const leadsTableBody = document.getElementById("leadsTableBody");
-const searchInput = document.getElementById("searchInput");
 const loggedInUser = localStorage.getItem("loggedInUser");
+
+const searchInput = document.getElementById("searchInput");
+const statusFilter = document.getElementById("statusFilter");
+const sourceFilter = document.getElementById("sourceFilter");
+const productFilter = document.getElementById("productFilter");
 
 if (!loggedInUser) {
   window.location.href = "login.html";
 }
 
-async function fetchLeads() {
+loadLeads();
+
+async function loadLeads() {
   try {
     const res = await fetch(API_URL);
     const rawLeads = await res.json();
@@ -27,30 +33,91 @@ async function fetchLeads() {
       status: String(lead["Status"] || ""),
       remarks: String(lead["Remarks"] || ""),
       lead_status: String(lead["Lead Status"] || ""),
-      order_value: Number(lead["Order Value"] || 0)
+      order_value: Number(lead["Order Value"] || 0),
+      next_followup_date: String(lead["Next Follow-up Date"] || "")
     }));
 
-    // 🔥 Filter based on role
+    // 🔒 Role-based lead visibility
     if (loggedInUser !== "Manager" && loggedInUser !== "Admin") {
-      leads = leads.filter((lead) => lead.lead_owner === loggedInUser);
+      leads = leads.filter(lead => lead.lead_owner === loggedInUser);
     }
 
     filteredLeads = [...leads];
+
+    populateFilters();
     renderLeads(filteredLeads);
+    attachFilterEvents();
+
   } catch (error) {
     console.error("Error loading leads:", error);
     leadsTableBody.innerHTML = `
-      <tr><td colspan="11" style="text-align:center;">Failed to load leads.</td></tr>
+      <tr>
+        <td colspan="10" style="text-align:center;">Failed to load leads.</td>
+      </tr>
     `;
   }
 }
 
-function getStatusBadge(status) {
-  if (status === "New") return `<span class="badge new">New</span>`;
-  if (status === "Follow-up") return `<span class="badge followup">Follow-up</span>`;
-  if (status === "Won") return `<span class="badge won">Won</span>`;
-  if (status === "Lost") return `<span class="badge lost">Lost</span>`;
-  return status;
+function populateFilters() {
+  const statuses = [...new Set(leads.map(l => l.status).filter(Boolean))];
+  const sources = [...new Set(leads.map(l => l.lead_source).filter(Boolean))];
+  const products = [...new Set(leads.map(l => l.product_category).filter(Boolean))];
+
+  statusFilter.innerHTML = `<option value="">All Status</option>`;
+  sourceFilter.innerHTML = `<option value="">All Sources</option>`;
+  productFilter.innerHTML = `<option value="">All Products</option>`;
+
+  statuses.forEach(status => {
+    statusFilter.innerHTML += `<option value="${status}">${status}</option>`;
+  });
+
+  sources.forEach(source => {
+    sourceFilter.innerHTML += `<option value="${source}">${source}</option>`;
+  });
+
+  products.forEach(product => {
+    productFilter.innerHTML += `<option value="${product}">${product}</option>`;
+  });
+}
+
+function attachFilterEvents() {
+  searchInput.addEventListener("input", applyFilters);
+  statusFilter.addEventListener("change", applyFilters);
+  sourceFilter.addEventListener("change", applyFilters);
+  productFilter.addEventListener("change", applyFilters);
+}
+
+function applyFilters() {
+  const searchValue = searchInput.value.trim().toLowerCase();
+  const selectedStatus = statusFilter.value.trim();
+  const selectedSource = sourceFilter.value.trim();
+  const selectedProduct = productFilter.value.trim();
+
+  filteredLeads = leads.filter(lead => {
+    const matchesSearch =
+      lead.customer_name.toLowerCase().includes(searchValue) ||
+      lead.contact_no.toLowerCase().includes(searchValue) ||
+      lead.email.toLowerCase().includes(searchValue) ||
+      lead.lead_id.toLowerCase().includes(searchValue);
+
+    const matchesStatus = !selectedStatus || lead.status === selectedStatus;
+    const matchesSource = !selectedSource || lead.lead_source === selectedSource;
+    const matchesProduct = !selectedProduct || lead.product_category === selectedProduct;
+
+    return matchesSearch && matchesStatus && matchesSource && matchesProduct;
+  });
+
+  renderLeads(filteredLeads);
+}
+
+function resetFilters() {
+  searchInput.value = "";
+  statusFilter.value = "";
+  sourceFilter.value = "";
+  productFilter.value = "";
+
+  filteredLeads = [...leads];
+  renderLeads(filteredLeads);
 }
 
 function renderLeads(data) {
@@ -59,25 +126,24 @@ function renderLeads(data) {
   if (data.length === 0) {
     leadsTableBody.innerHTML = `
       <tr>
-        <td colspan="11" style="text-align:center;">No leads found.</td>
+        <td colspan="10" style="text-align:center;">No leads found.</td>
       </tr>
     `;
     return;
   }
 
-  data.forEach((lead) => {
-    const row = `
+  data.forEach(lead => {
+    leadsTableBody.innerHTML += `
       <tr>
-        <td>${lead.lead_id || "-"}</td>
-        <td>${lead.date || "-"}</td>
-        <td>${lead.customer_name || "-"}</td>
-        <td>${lead.contact_no || "-"}</td>
+        <td>${lead.lead_id}</td>
+        <td>${lead.customer_name}</td>
+        <td>${lead.contact_no}</td>
+        <td>${lead.email || "-"}</td>
         <td>${lead.lead_source || "-"}</td>
         <td>${lead.product_category || "-"}</td>
+        <td>${lead.status || "-"}</td>
         <td>${lead.lead_owner || "-"}</td>
-        <td>${getStatusBadge(lead.status || "-")}</td>
-        <td>${lead.lead_status || "-"}</td>
-        <td>₹ ${lead.order_value || 0}</td>
+        <td>${lead.next_followup_date || "-"}</td>
         <td>
           <button onclick="viewLead(${lead.id})">View</button>
           <button onclick="editLead('${lead.lead_id}')" style="margin-top:6px;background:#16a34a;">Edit</button>
@@ -89,7 +155,6 @@ function renderLeads(data) {
         </td>
       </tr>
     `;
-    leadsTableBody.innerHTML += row;
   });
 }
 
@@ -97,21 +162,6 @@ function viewLead(id) {
   localStorage.setItem("selectedLeadId", id);
   window.location.href = "lead-detail.html";
 }
-
-searchInput.addEventListener("input", function () {
-  const value = this.value.toLowerCase().trim();
-
-  filteredLeads = leads.filter((lead) =>
-    (lead.customer_name || "").toLowerCase().includes(value) ||
-    (lead.contact_no || "").toLowerCase().includes(value) ||
-    (lead.lead_source || "").toLowerCase().includes(value) ||
-    (lead.lead_owner || "").toLowerCase().includes(value)
-  );
-
-  renderLeads(filteredLeads);
-});
-
-fetchLeads();
 
 function editLead(leadId) {
   localStorage.setItem("editLeadId", leadId);
@@ -171,7 +221,7 @@ async function reassignLead(leadId, currentOwner) {
 
     if (result.success) {
       alert(`Lead reassigned successfully to ${newOwner}!`);
-      fetchLeads();
+      loadLeads();
     } else if (result.permission_denied) {
       alert("Permission denied. Only Manager/Admin can reassign leads.");
     } else {
