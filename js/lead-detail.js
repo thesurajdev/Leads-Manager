@@ -5,8 +5,17 @@ const selectedLeadId = localStorage.getItem("selectedLeadId");
 const leadDetailBox = document.getElementById("leadDetailBox");
 const followupForm = document.getElementById("followupForm");
 const followupTableBody = document.getElementById("followupTableBody");
+const timelineBox = document.getElementById("leadTimeline");
+
+const loggedInUser = localStorage.getItem("loggedInUser");
+
+if (!loggedInUser) {
+  window.location.href = "login.html";
+}
 
 let lead = null;
+
+loadLeadAndFollowups();
 
 async function loadLeadAndFollowups() {
   try {
@@ -27,13 +36,25 @@ async function loadLeadAndFollowups() {
       status: String(item["Status"] || ""),
       remarks: String(item["Remarks"] || ""),
       lead_status: String(item["Lead Status"] || ""),
-      order_value: Number(item["Order Value"] || 0)
+      order_value: Number(item["Order Value"] || 0),
+      next_followup_date: String(item["Next Follow-up Date"] || "")
     }));
 
     lead = leads.find((l) => String(l.id) === String(selectedLeadId));
 
     if (!lead) {
       leadDetailBox.innerHTML = "<p>Lead not found.</p>";
+      return;
+    }
+
+    // 🔒 View restriction (agents only their own lead)
+    if (
+      loggedInUser !== "Manager" &&
+      loggedInUser !== "Admin" &&
+      lead.lead_owner !== loggedInUser
+    ) {
+      alert("Permission denied. You can only view your own leads.");
+      window.location.href = "leads.html";
       return;
     }
 
@@ -58,6 +79,7 @@ async function loadLeadAndFollowups() {
     }));
 
     renderFollowups();
+    renderTimeline();
 
   } catch (error) {
     console.error("Error loading lead/followups:", error);
@@ -79,6 +101,7 @@ function renderLeadDetail() {
         <tr><th>Status</th><td>${lead.status || "-"}</td></tr>
         <tr><th>Lead Status</th><td>${lead.lead_status || "-"}</td></tr>
         <tr><th>Remarks</th><td>${lead.remarks || "-"}</td></tr>
+        <tr><th>Next Follow-up Date</th><td>${lead.next_followup_date || "-"}</td></tr>
       </table>
     </div>
   `;
@@ -111,6 +134,43 @@ function renderFollowups() {
   });
 }
 
+function renderTimeline() {
+  const leadFollowups = followups
+    .filter(f => f.lead_id === lead.lead_id)
+    .sort((a, b) => new Date(a.followup_date) - new Date(b.followup_date));
+
+  let timelineHTML = `
+    <div class="timeline-item">
+      <div class="timeline-dot"></div>
+      <div class="timeline-content">
+        <h4>Lead Created</h4>
+        <p><strong>Date:</strong> ${lead.date || "-"}</p>
+        <p><strong>Owner:</strong> ${lead.lead_owner || "-"}</p>
+        <p><strong>Status:</strong> ${lead.status || "-"}</p>
+        <p><strong>Remarks:</strong> ${lead.remarks || "-"}</p>
+      </div>
+    </div>
+  `;
+
+  leadFollowups.forEach(f => {
+    timelineHTML += `
+      <div class="timeline-item">
+        <div class="timeline-dot"></div>
+        <div class="timeline-content">
+          <h4>${f.followup_type || "Follow-up"} - ${f.followup_status || "-"}</h4>
+          <p><strong>Follow-up Date:</strong> ${f.followup_date || "-"}</p>
+          <p><strong>Remarks:</strong> ${f.remarks || "-"}</p>
+          <p><strong>Next Follow-up:</strong> ${f.next_followup_date || "-"}</p>
+          <p><strong>Updated By:</strong> ${f.created_by || "-"}</p>
+          <p><strong>Timestamp:</strong> ${f.created_timestamp || "-"}</p>
+        </div>
+      </div>
+    `;
+  });
+
+  timelineBox.innerHTML = timelineHTML;
+}
+
 followupForm.addEventListener("submit", async function (e) {
   e.preventDefault();
 
@@ -133,7 +193,7 @@ followupForm.addEventListener("submit", async function (e) {
     followup_status,
     remarks,
     next_followup_date,
-    created_by: lead.lead_owner,
+    created_by: loggedInUser,
     created_timestamp: new Date().toLocaleString()
   };
 
@@ -158,5 +218,3 @@ followupForm.addEventListener("submit", async function (e) {
     alert("Error saving follow-up.");
   }
 });
-
-loadLeadAndFollowups();
