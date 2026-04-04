@@ -13,12 +13,12 @@ form.addEventListener("submit", async function (e) {
   const remarks = document.getElementById("remarks").value.trim();
 
   try {
-    // 🔍 Step 1: Fetch existing leads from Google Sheet
+    console.log("Fetching existing leads...");
     const existingRes = await fetch(API_URL);
-    let existingLeads = await existingRes.json();
+    const existingLeadsRaw = await existingRes.json();
+    console.log("Existing leads:", existingLeadsRaw);
 
-    // Normalize Google Sheet fields
-    existingLeads = existingLeads.map((lead) => ({
+    const existingLeads = existingLeadsRaw.map((lead) => ({
       lead_id: lead["Lead ID"],
       customer_name: lead["Customer Name"],
       contact_no: lead["Contact No."],
@@ -28,7 +28,6 @@ form.addEventListener("submit", async function (e) {
       lead_status: lead["Lead Status"]
     }));
 
-    // 🔴 Step 2: Duplicate Check (ONLY OPEN LEADS)
     const duplicate = existingLeads.find((lead) => {
       const samePhone = (lead.contact_no || "").trim() === contact_no;
       const sameEmail =
@@ -50,7 +49,6 @@ form.addEventListener("submit", async function (e) {
       return;
     }
 
-    // ✅ Step 3: If no duplicate, create new lead
     const lead_id = "LD-" + Date.now();
     const created_date = new Date().toISOString().split("T")[0];
 
@@ -69,23 +67,25 @@ form.addEventListener("submit", async function (e) {
       order_value: 0
     };
 
-    // 💾 Step 4: Save to Google Sheet
+    console.log("Saving lead:", newLead);
+
     const res = await fetch(API_URL, {
       method: "POST",
       body: JSON.stringify(newLead)
     });
 
     const result = await res.json();
+    console.log("Save result:", result);
 
     if (result.success) {
       alert("Lead added successfully!");
       window.location.href = "leads.html";
     } else {
-      alert("Failed to save lead.");
+      alert("Failed to save lead.\n\n" + JSON.stringify(result));
     }
 
   } catch (error) {
-    console.error("Error:", error);
-    alert("Error checking or saving lead.");
+    console.error("REAL ERROR:", error);
+    alert("Real Error:\n\n" + error.message);
   }
 });
