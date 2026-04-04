@@ -1,0 +1,78 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Lead Detail - CRM</title>
+  <link rel="stylesheet" href="css/style.css" />
+</head>
+<body>
+  <div class="container">
+    <h1>Lead Detail</h1>
+
+    <div class="nav-links">
+      <a href="index.html">Home</a>
+      <a href="leads.html">Back to Leads</a>
+    </div>
+
+    <div id="leadDetailBox" style="margin-top: 30px;"></div>
+
+    <hr style="margin: 30px 0;" />
+
+    <h2>Add Follow-up</h2>
+    <form id="followupForm">
+      <label>Follow-up Date</label>
+      <input type="date" id="followup_date" required />
+
+      <label>Follow-up Type</label>
+      <select id="followup_type">
+        <option>Call</option>
+        <option>WhatsApp</option>
+        <option>Email</option>
+        <option>Meeting</option>
+        <option>Demo</option>
+        <option>Visit</option>
+      </select>
+
+      <label>Follow-up Status</label>
+      <select id="followup_status">
+        <option>No Response</option>
+        <option>Interested</option>
+        <option>Call Back Later</option>
+        <option>Quotation Sent</option>
+        <option>Negotiation</option>
+        <option>Won</option>
+        <option>Lost</option>
+      </select>
+
+      <label>Remarks</label>
+      <textarea id="followup_remarks" required></textarea>
+
+      <label>Next Follow-up Date</label>
+      <input type="date" id="next_followup_date" />
+
+      <button type="submit">Add Follow-up</button>
+    </form>
+
+    <hr style="margin: 30px 0;" />
+
+    <h2>Follow-up History</h2>
+    <div class="table-wrapper">
+      <table>
+        <thead>
+          <tr>
+            <th>Date</th>
+            <th>Type</th>
+            <th>Status</th>
+            <th>Remarks</th>
+            <th>Next Follow-up</th>
+          </tr>
+        </thead>
+        <tbody id="followupTableBody"></tbody>
+      </table>
+    </div>
+  </div>
+
+  <script src="js/lead-detail.js"></script>
+</body>
+</html>
