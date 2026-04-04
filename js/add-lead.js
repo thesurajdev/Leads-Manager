@@ -1,5 +1,6 @@
 const form = document.getElementById("leadForm");
 const saveLeadBtn = document.getElementById("saveLeadBtn");
+const pageTitle = document.getElementById("pageTitle");
 
 const loggedInUser = localStorage.getItem("loggedInUser");
 const editLeadId = localStorage.getItem("editLeadId");
@@ -13,11 +14,61 @@ document.getElementById("lead_owner").value = loggedInUser;
 let isSubmitting = false;
 let isEditMode = false;
 
-if (editLeadId) {
-  isEditMode = true;
-  loadLeadForEdit(editLeadId);
+// 🚀 Start page
+initPage();
+
+async function initPage() {
+  await loadMasterData();
+
+  if (editLeadId) {
+    isEditMode = true;
+    pageTitle.innerText = "Edit Lead";
+    await loadLeadForEdit(editLeadId);
+  } else {
+    pageTitle.innerText = "Add New Lead";
+  }
 }
 
+// 🔥 Load dropdowns from Master_Data sheet
+async function loadMasterData() {
+  try {
+    const res = await fetch(API_URL + "?action=master");
+    const data = await res.json();
+
+    const leadSourceSelect = document.getElementById("lead_source");
+    const productSelect = document.getElementById("product_category");
+    const statusSelect = document.getElementById("status");
+
+    leadSourceSelect.innerHTML = `<option value="">Select Lead Source</option>`;
+    productSelect.innerHTML = `<option value="">Select Product Category</option>`;
+    statusSelect.innerHTML = `<option value="">Select Status</option>`;
+
+    data.forEach(item => {
+      const type = String(item["Type"] || "").trim();
+      const value = String(item["Value"] || "").trim();
+
+      if (!value) return;
+
+      if (type === "Lead Source") {
+        leadSourceSelect.innerHTML += `<option value="${value}">${value}</option>`;
+      }
+
+      if (type === "Product Category") {
+        productSelect.innerHTML += `<option value="${value}">${value}</option>`;
+      }
+
+      if (type === "Status") {
+        statusSelect.innerHTML += `<option value="${value}">${value}</option>`;
+      }
+    });
+
+  } catch (error) {
+    console.error("Master data load error:", error);
+    alert("Failed to load dropdown master data.");
+  }
+}
+
+// 🔥 Load existing lead for editing
 async function loadLeadForEdit(leadId) {
   try {
     const res = await fetch(API_URL);
@@ -77,7 +128,7 @@ form.addEventListener("submit", async function (e) {
   const lead_source = document.getElementById("lead_source").value.trim();
   const product_category = document.getElementById("product_category").value.trim();
   const lead_owner = document.getElementById("lead_owner").value.trim();
-  const status = document.getElementById("status").value;
+  const status = document.getElementById("status").value.trim();
   const remarks = document.getElementById("remarks").value.trim();
 
   try {
