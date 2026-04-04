@@ -1,31 +1,78 @@
-const leads = JSON.parse(localStorage.getItem("leads")) || [];
-const followups = JSON.parse(localStorage.getItem("followups")) || [];
+let leads = [];
+let followups = [];
 
 const todayFollowupsBody = document.getElementById("todayFollowups");
 const overdueFollowupsBody = document.getElementById("overdueFollowups");
 const upcomingFollowupsBody = document.getElementById("upcomingFollowups");
 
+const loggedInUser = localStorage.getItem("loggedInUser");
+
+if (!loggedInUser) {
+  window.location.href = "login.html";
+}
+
 const today = new Date().toISOString().split("T")[0];
 
-// Get latest follow-up per lead
-const latestFollowupsMap = {};
+async function loadData() {
+  try {
+    // Load Leads
+    const leadsRes = await fetch(API_URL);
+    const leadsRaw = await leadsRes.json();
 
-followups.forEach((f) => {
-  if (!latestFollowupsMap[f.lead_id] || f.created_at > latestFollowupsMap[f.lead_id].created_at) {
-    latestFollowupsMap[f.lead_id] = f;
+    leads = leadsRaw.map((lead, index) => ({
+      id: index + 1,
+      lead_id: String(lead["Lead ID"] || ""),
+      date: String(lead["Created Date"] || ""),
+      lead_owner: String(lead["Lead Owner"] || ""),
+      customer_name: String(lead["Customer Name"] || ""),
+      contact_no: String(lead["Contact No."] || ""),
+      email: String(lead["Email ID"] || ""),
+      lead_source: String(lead["Lead Source"] || ""),
+      product_category: String(lead["Product Category"] || ""),
+      status: String(lead["Status"] || ""),
+      remarks: String(lead["Remarks"] || ""),
+      lead_status: String(lead["Lead Status"] || ""),
+      order_value: Number(lead["Order Value"] || 0),
+      next_followup_date: String(lead["Next Follow-up Date"] || "")
+    }));
+
+    // Load Followups
+    const followRes = await fetch(API_URL + "?action=followups");
+    const followRaw = await followRes.json();
+
+    followups = followRaw.map((f) => ({
+      followup_id: String(f["Followup ID"] || ""),
+      lead_id: String(f["Lead ID"] || ""),
+      customer_name: String(f["Customer Name"] || ""),
+      contact_no: String(f["Contact No."] || ""),
+      followup_date: String(f["Follow-up Date"] || ""),
+      followup_type: String(f["Follow-up Type"] || ""),
+      followup_status: String(f["Follow-up Status"] || ""),
+      remarks: String(f["Remarks"] || ""),
+      next_followup_date: String(f["Next Follow-up Date"] || ""),
+      created_by: String(f["Created By"] || ""),
+      created_timestamp: String(f["Created Timestamp"] || "")
+    }));
+
+    renderFollowups();
+
+  } catch (error) {
+    console.error("Error loading follow-up data:", error);
+
+    todayFollowupsBody.innerHTML = `<tr><td colspan="7" style="text-align:center;">Failed to load follow-ups.</td></tr>`;
+    overdueFollowupsBody.innerHTML = `<tr><td colspan="7" style="text-align:center;">Failed to load follow-ups.</td></tr>`;
+    upcomingFollowupsBody.innerHTML = `<tr><td colspan="7" style="text-align:center;">Failed to load follow-ups.</td></tr>`;
   }
-});
+}
 
-const latestFollowups = Object.values(latestFollowupsMap);
-
-function createRow(lead, latestFollowup) {
+function createRow(lead) {
   return `
     <tr>
       <td>${lead.lead_id}</td>
       <td>${lead.customer_name}</td>
       <td>${lead.contact_no}</td>
       <td>${lead.lead_owner || "-"}</td>
-      <td>${latestFollowup?.next_followup_date || "-"}</td>
+      <td>${lead.next_followup_date || "-"}</td>
       <td>${lead.status || "-"}</td>
       <td><button onclick="openLead(${lead.id})">Open</button></td>
     </tr>
@@ -37,20 +84,25 @@ function renderFollowups() {
   overdueFollowupsBody.innerHTML = "";
   upcomingFollowupsBody.innerHTML = "";
 
-  leads.forEach((lead) => {
+  let visibleLeads = [...leads];
+
+  // 🔥 Agent sees only own leads
+  if (loggedInUser !== "Manager" && loggedInUser !== "Admin") {
+    visibleLeads = visibleLeads.filter((lead) => lead.lead_owner === loggedInUser);
+  }
+
+  visibleLeads.forEach((lead) => {
     if (lead.lead_status !== "Open") return;
+    if (!lead.next_followup_date) return;
 
-    const latestFollowup = latestFollowupsMap[lead.lead_id];
-    if (!latestFollowup || !latestFollowup.next_followup_date) return;
-
-    const nextDate = latestFollowup.next_followup_date;
+    const nextDate = lead.next_followup_date;
 
     if (nextDate === today) {
-      todayFollowupsBody.innerHTML += createRow(lead, latestFollowup);
+      todayFollowupsBody.innerHTML += createRow(lead);
     } else if (nextDate < today) {
-      overdueFollowupsBody.innerHTML += createRow(lead, latestFollowup);
+      overdueFollowupsBody.innerHTML += createRow(lead);
     } else if (nextDate > today) {
-      upcomingFollowupsBody.innerHTML += createRow(lead, latestFollowup);
+      upcomingFollowupsBody.innerHTML += createRow(lead);
     }
   });
 
@@ -72,4 +124,4 @@ function openLead(id) {
   window.location.href = "lead-detail.html";
 }
 
-renderFollowups();
+loadData();
