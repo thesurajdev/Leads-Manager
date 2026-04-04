@@ -67,7 +67,8 @@ form.addEventListener("submit", async function (e) {
       status,
       remarks,
       lead_status: "Open",
-      order_value: 0
+      order_value: 0,
+      next_followup_date: ""
     };
 
     console.log("Saving lead:", newLead);
