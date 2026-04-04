@@ -17,6 +17,24 @@
       <a href="followups.html">Follow-ups</a>
     </div>
 
+    <div class="filters-box" style="margin: 20px 0;">
+      <input type="text" id="searchInput" placeholder="Search by Name / Phone / Email / Lead ID" />
+    
+      <select id="statusFilter">
+        <option value="">All Status</option>
+      </select>
+    
+      <select id="sourceFilter">
+        <option value="">All Sources</option>
+      </select>
+    
+      <select id="productFilter">
+        <option value="">All Products</option>
+      </select>
+    
+      <button onclick="resetFilters()" style="background:#ef4444;">Reset Filters</button>
+    </div>
+
     <div style="margin-top: 20px;">
       <input type="text" id="searchInput" placeholder="Search by customer, phone, source, owner..." />
     </div>
