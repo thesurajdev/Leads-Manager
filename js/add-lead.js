@@ -12,25 +12,64 @@ form.addEventListener("submit", async function (e) {
   const status = document.getElementById("status").value;
   const remarks = document.getElementById("remarks").value.trim();
 
-  const lead_id = "LD-" + Date.now();
-  const created_date = new Date().toISOString().split("T")[0];
-
-  const newLead = {
-    lead_id,
-    created_date,
-    lead_owner,
-    customer_name,
-    contact_no,
-    email_id: email,
-    lead_source,
-    product_category,
-    status,
-    remarks,
-    lead_status: "Open",
-    order_value: 0
-  };
-
   try {
+    // 🔍 Step 1: Fetch existing leads from Google Sheet
+    const existingRes = await fetch(API_URL);
+    let existingLeads = await existingRes.json();
+
+    // Normalize Google Sheet fields
+    existingLeads = existingLeads.map((lead) => ({
+      lead_id: lead["Lead ID"],
+      customer_name: lead["Customer Name"],
+      contact_no: lead["Contact No."],
+      email: lead["Email ID"],
+      lead_owner: lead["Lead Owner"],
+      status: lead["Status"],
+      lead_status: lead["Lead Status"]
+    }));
+
+    // 🔴 Step 2: Duplicate Check (ONLY OPEN LEADS)
+    const duplicate = existingLeads.find((lead) => {
+      const samePhone = (lead.contact_no || "").trim() === contact_no;
+      const sameEmail =
+        email &&
+        (lead.email || "").trim().toLowerCase() === email.toLowerCase();
+
+      return (samePhone || sameEmail) && lead.lead_status === "Open";
+    });
+
+    if (duplicate) {
+      alert(
+        `Duplicate Lead Found!\n\n` +
+        `Customer: ${duplicate.customer_name}\n` +
+        `Lead ID: ${duplicate.lead_id}\n` +
+        `Owner: ${duplicate.lead_owner}\n` +
+        `Current Status: ${duplicate.status}\n\n` +
+        `This lead is already OPEN and cannot be added again.`
+      );
+      return;
+    }
+
+    // ✅ Step 3: If no duplicate, create new lead
+    const lead_id = "LD-" + Date.now();
+    const created_date = new Date().toISOString().split("T")[0];
+
+    const newLead = {
+      lead_id,
+      created_date,
+      lead_owner,
+      customer_name,
+      contact_no,
+      email_id: email,
+      lead_source,
+      product_category,
+      status,
+      remarks,
+      lead_status: "Open",
+      order_value: 0
+    };
+
+    // 💾 Step 4: Save to Google Sheet
     const res = await fetch(API_URL, {
       method: "POST",
       body: JSON.stringify(newLead)
@@ -44,8 +83,9 @@ form.addEventListener("submit", async function (e) {
     } else {
       alert("Failed to save lead.");
     }
+
   } catch (error) {
-    console.error("Error saving lead:", error);
-    alert("Error saving lead.");
+    console.error("Error:", error);
+    alert("Error checking or saving lead.");
   }
 });
