@@ -28,6 +28,21 @@ async function loadLeadForEdit(leadId) {
     if (!lead) {
       alert("Lead not found for editing.");
       localStorage.removeItem("editLeadId");
+      window.location.href = "leads.html";
+      return;
+    }
+
+    const leadOwner = String(lead["Lead Owner"] || "");
+
+    // 🔒 FRONTEND PERMISSION LOCK
+    if (
+      loggedInUser !== "Manager" &&
+      loggedInUser !== "Admin" &&
+      leadOwner !== loggedInUser
+    ) {
+      alert("Permission denied. You can only edit your own leads.");
+      localStorage.removeItem("editLeadId");
+      window.location.href = "leads.html";
       return;
     }
 
