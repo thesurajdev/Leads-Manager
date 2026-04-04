@@ -39,6 +39,7 @@ function renderLeads(data) {
         <td>₹ ${lead.order_value || 0}</td>
         <td>
           <button onclick="viewLead(${lead.id})">View</button>
+          <button onclick="editLead(${lead.id})" style="margin-top:6px;background:#16a34a;">Edit</button>
           <button onclick="deleteLead(${lead.id})" style="margin-top:6px;background:#dc2626;">Delete</button>
         </td>
       </tr>
@@ -50,6 +51,11 @@ function renderLeads(data) {
 function viewLead(id) {
   localStorage.setItem("selectedLeadId", id);
   window.location.href = "lead-detail.html";
+}
+
+function editLead(id) {
+  localStorage.setItem("editLeadId", id);
+  window.location.href = "add-lead.html";
 }
 
 function deleteLead(id) {
