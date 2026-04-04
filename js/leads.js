@@ -7,23 +7,22 @@ const searchInput = document.getElementById("searchInput");
 async function fetchLeads() {
   try {
     const res = await fetch(API_URL);
-    leads = await res.json();
+    const rawLeads = await res.json();
 
-    // Normalize field names from Google Sheet
-    leads = leads.map((lead, index) => ({
+    leads = rawLeads.map((lead, index) => ({
       id: index + 1,
-      lead_id: lead["Lead ID"],
-      date: lead["Created Date"],
-      lead_owner: lead["Lead Owner"],
-      customer_name: lead["Customer Name"],
-      contact_no: lead["Contact No."],
-      email: lead["Email ID"],
-      lead_source: lead["Lead Source"],
-      product_category: lead["Product Category"],
-      status: lead["Status"],
-      remarks: lead["Remarks"],
-      lead_status: lead["Lead Status"],
-      order_value: lead["Order Value"] || 0
+      lead_id: String(lead["Lead ID"] || ""),
+      date: String(lead["Created Date"] || ""),
+      lead_owner: String(lead["Lead Owner"] || ""),
+      customer_name: String(lead["Customer Name"] || ""),
+      contact_no: String(lead["Contact No."] || ""),
+      email: String(lead["Email ID"] || ""),
+      lead_source: String(lead["Lead Source"] || ""),
+      product_category: String(lead["Product Category"] || ""),
+      status: String(lead["Status"] || ""),
+      remarks: String(lead["Remarks"] || ""),
+      lead_status: String(lead["Lead Status"] || ""),
+      order_value: Number(lead["Order Value"] || 0)
     }));
 
     filteredLeads = [...leads];
@@ -70,12 +69,17 @@ function renderLeads(data) {
         <td>${lead.lead_status || "-"}</td>
         <td>₹ ${lead.order_value || 0}</td>
         <td>
-          <button onclick="alert('Lead detail page will be connected next')">View</button>
+          <button onclick="viewLead(${lead.id})">View</button>
         </td>
       </tr>
     `;
     leadsTableBody.innerHTML += row;
   });
+}
+
+function viewLead(id) {
+  localStorage.setItem("selectedLeadId", id);
+  window.location.href = "lead-detail.html";
 }
 
 searchInput.addEventListener("input", function () {
