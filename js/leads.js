@@ -107,3 +107,8 @@ searchInput.addEventListener("input", function () {
 });
 
 fetchLeads();
+
+function editLead(leadId) {
+  localStorage.setItem("editLeadId", leadId);
+  window.location.href = "add-lead.html";
+}
