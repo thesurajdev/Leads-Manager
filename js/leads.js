@@ -80,6 +80,7 @@ function renderLeads(data) {
         <td>₹ ${lead.order_value || 0}</td>
         <td>
           <button onclick="viewLead(${lead.id})">View</button>
+          <button onclick="editLead('${lead.lead_id}')" style="margin-top:6px;background:#16a34a;">Edit</button>
         </td>
       </tr>
     `;
