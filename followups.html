@@ -1,0 +1,77 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Follow-ups - CRM</title>
+  <link rel="stylesheet" href="css/style.css" />
+</head>
+<body>
+  <div class="container">
+    <h1>Follow-up Tracker</h1>
+
+    <div class="nav-links">
+      <a href="index.html">Home</a>
+      <a href="dashboard.html">Dashboard</a>
+      <a href="leads.html">Leads</a>
+      <a href="add-lead.html">Add Lead</a>
+    </div>
+
+    <h2 style="margin-top:30px;">Today's Follow-ups</h2>
+    <div class="table-wrapper">
+      <table>
+        <thead>
+          <tr>
+            <th>Lead ID</th>
+            <th>Customer</th>
+            <th>Contact</th>
+            <th>Owner</th>
+            <th>Next Follow-up</th>
+            <th>Status</th>
+            <th>Action</th>
+          </tr>
+        </thead>
+        <tbody id="todayFollowups"></tbody>
+      </table>
+    </div>
+
+    <h2 style="margin-top:40px;">Overdue Follow-ups</h2>
+    <div class="table-wrapper">
+      <table>
+        <thead>
+          <tr>
+            <th>Lead ID</th>
+            <th>Customer</th>
+            <th>Contact</th>
+            <th>Owner</th>
+            <th>Next Follow-up</th>
+            <th>Status</th>
+            <th>Action</th>
+          </tr>
+        </thead>
+        <tbody id="overdueFollowups"></tbody>
+      </table>
+    </div>
+
+    <h2 style="margin-top:40px;">Upcoming Follow-ups</h2>
+    <div class="table-wrapper">
+      <table>
+        <thead>
+          <tr>
+            <th>Lead ID</th>
+            <th>Customer</th>
+            <th>Contact</th>
+            <th>Owner</th>
+            <th>Next Follow-up</th>
+            <th>Status</th>
+            <th>Action</th>
+          </tr>
+        </thead>
+        <tbody id="upcomingFollowups"></tbody>
+      </table>
+    </div>
+  </div>
+
+  <script src="js/followups.js"></script>
+</body>
+</html>
