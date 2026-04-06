@@ -2,6 +2,7 @@ let leads = [];
 let reportRows = [];
 
 const loggedInUser = localStorage.getItem("loggedInUser");
+const userRole = localStorage.getItem("userRole");
 
 const reportAccessMessage = document.getElementById("reportAccessMessage");
 const reportBuilder = document.getElementById("reportBuilder");
@@ -16,11 +17,11 @@ const dateFrom = document.getElementById("dateFrom");
 const dateTo = document.getElementById("dateTo");
 const generateReportBtn = document.getElementById("generateReportBtn");
 
-if (!loggedInUser) {
+if (!loggedInUser || !userRole) {
   window.location.href = "login.html";
 }
 
-if (loggedInUser !== "Manager" && loggedInUser !== "Admin") {
+if (userRole !== "Manager" && userRole !== "Admin") {
   reportAccessMessage.innerHTML = `
     <p style="color:red; font-weight:bold;">
       Access denied. Only Manager/Admin can view reports.
@@ -80,7 +81,7 @@ function generateReport() {
     );
   }
 
-  // 🔥 Apply date range filter on Created Date
+  // 🔥 Apply date range filter
   if (fromDate) {
     filtered = filtered.filter(item => {
       const itemDate = String(item.date || "");
@@ -125,19 +126,22 @@ function generateSimpleReport(data, rowKey, valueType) {
     }
   });
 
+  const valueLabel = valueType === "count" ? "Count of Leads" : "Sum of Order Value";
+
   let html = `
     <div class="table-wrapper">
       <table>
         <thead>
           <tr>
             <th>${formatLabel(rowKey)}</th>
-            <th>${valueType === "count" ? "Count of Leads" : "Sum of Order Value"}</th>
+            <th>${valueLabel}</th>
           </tr>
         </thead>
         <tbody>
   `;
 
-  reportRows = [];
+  // ✅ Add CSV header too
+  reportRows = [[formatLabel(rowKey), valueLabel]];
 
   Object.keys(grouped).sort().forEach(key => {
     const value = grouped[key];
@@ -220,7 +224,6 @@ function generatePivotReport(data, rowKey, colKey, valueType) {
     html += `<td>${valueType === "sum_order_value" ? "₹ " + total : total}</td></tr>`;
   });
 
-  // Grand total row
   html += `<tr><th>Total</th>`;
   const totalRow = ["Total"];
   let grandTotal = 0;
@@ -285,19 +288,22 @@ function exportReportCSV() {
 }
 
 function setDatePreset(type) {
-  const today = new Date();
+  const now = new Date();
 
   let from = "";
   let to = "";
 
   if (type === "today") {
-    const t = today.toISOString().split("T")[0];
+    const t = now.toISOString().split("T")[0];
     from = t;
     to = t;
   }
 
   if (type === "week") {
-    const firstDay = new Date(today.setDate(today.getDate() - today.getDay()));
+    const temp = new Date();
+    const day = temp.getDay();
+    const diff = temp.getDate() - day;
+    const firstDay = new Date(temp.setDate(diff));
     const lastDay = new Date(firstDay);
     lastDay.setDate(firstDay.getDate() + 6);
 
@@ -306,16 +312,16 @@ function setDatePreset(type) {
   }
 
   if (type === "month") {
-    const firstDay = new Date(today.getFullYear(), today.getMonth(), 1);
-    const lastDay = new Date(today.getFullYear(), today.getMonth() + 1, 0);
+    const firstDay = new Date(now.getFullYear(), now.getMonth(), 1);
+    const lastDay = new Date(now.getFullYear(), now.getMonth() + 1, 0);
 
     from = firstDay.toISOString().split("T")[0];
     to = lastDay.toISOString().split("T")[0];
   }
 
   if (type === "lastMonth") {
-    const firstDay = new Date(today.getFullYear(), today.getMonth() - 1, 1);
-    const lastDay = new Date(today.getFullYear(), today.getMonth(), 0);
+    const firstDay = new Date(now.getFullYear(), now.getMonth() - 1, 1);
+    const lastDay = new Date(now.getFullYear(), now.getMonth(), 0);
 
     from = firstDay.toISOString().split("T")[0];
     to = lastDay.toISOString().split("T")[0];
@@ -329,6 +335,5 @@ function setDatePreset(type) {
   dateFrom.value = from;
   dateTo.value = to;
 
-  // 🔥 auto generate report after selecting preset
   generateReport();
 }
