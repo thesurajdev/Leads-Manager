@@ -35,14 +35,18 @@ async function loadDashboardData() {
     renderDashboard();
   } catch (error) {
     console.error("Dashboard load error:", error);
-    dashboardCards.innerHTML = `<p style="color:red;">Failed to load dashboard data.</p>`;
+    dashboardCards.innerHTML = `
+      <div class="card">
+        <p style="color:red;">Failed to load dashboard data.</p>
+      </div>
+    `;
   }
 }
 
 function renderDashboard() {
   let visibleLeads = [...leads];
 
-  // 🔒 Role-based filtering
+  // Role-based filtering
   if (userRole !== "Manager" && userRole !== "Admin") {
     visibleLeads = visibleLeads.filter((lead) => lead.lead_owner === loggedInUser);
   }
@@ -74,48 +78,54 @@ function renderDashboard() {
       : "My";
 
   dashboardCards.innerHTML = `
-    <div class="dashboard-grid">
-      <div class="card">
-        <h3>${titlePrefix} Total Leads</h3>
-        <p>${totalLeads}</p>
-      </div>
+    <div class="dashboard-card stat-card">
+      <h3>${titlePrefix} Total Leads</h3>
+      <p>${totalLeads}</p>
+    </div>
 
-      <div class="card">
-        <h3>${titlePrefix} Open Leads</h3>
-        <p>${openLeads}</p>
-      </div>
+    <div class="dashboard-card stat-card">
+      <h3>${titlePrefix} Open Leads</h3>
+      <p>${openLeads}</p>
+    </div>
 
-      <div class="card">
-        <h3>${titlePrefix} Won Leads</h3>
-        <p>${wonLeads}</p>
-      </div>
+    <div class="dashboard-card stat-card">
+      <h3>${titlePrefix} Won Leads</h3>
+      <p>${wonLeads}</p>
+    </div>
 
-      <div class="card">
-        <h3>${titlePrefix} Lost Leads</h3>
-        <p>${lostLeads}</p>
-      </div>
+    <div class="dashboard-card stat-card">
+      <h3>${titlePrefix} Lost Leads</h3>
+      <p>${lostLeads}</p>
+    </div>
 
-      <div class="card">
-        <h3>${titlePrefix} Today Follow-ups</h3>
-        <p>${todayFollowups}</p>
-      </div>
+    <div class="dashboard-card stat-card">
+      <h3>${titlePrefix} Today Follow-ups</h3>
+      <p>${todayFollowups}</p>
+    </div>
 
-      <div class="card">
-        <h3>${titlePrefix} Overdue Follow-ups</h3>
-        <p>${overdueFollowups}</p>
-      </div>
+    <div class="dashboard-card stat-card">
+      <h3>${titlePrefix} Overdue Follow-ups</h3>
+      <p>${overdueFollowups}</p>
+    </div>
 
-      <div class="card">
-        <h3>${titlePrefix} Upcoming Follow-ups</h3>
-        <p>${upcomingFollowups}</p>
-      </div>
+    <div class="dashboard-card stat-card">
+      <h3>${titlePrefix} Upcoming Follow-ups</h3>
+      <p>${upcomingFollowups}</p>
+    </div>
 
-      <div class="card">
-        <h3>${titlePrefix} Revenue</h3>
-        <p>₹ ${totalRevenue}</p>
-      </div>
+    <div class="dashboard-card stat-card">
+      <h3>${titlePrefix} Revenue</h3>
+      <p>${formatCurrency(totalRevenue)}</p>
     </div>
   `;
+}
+
+function formatCurrency(amount) {
+  return new Intl.NumberFormat("en-IN", {
+    style: "currency",
+    currency: "INR",
+    maximumFractionDigits: 0
+  }).format(amount || 0);
 }
 
 loadDashboardData();
