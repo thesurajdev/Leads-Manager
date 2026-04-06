@@ -2,8 +2,9 @@ let leads = [];
 
 const dashboardCards = document.getElementById("dashboardCards");
 const loggedInUser = localStorage.getItem("loggedInUser");
+const userRole = localStorage.getItem("userRole");
 
-if (!loggedInUser) {
+if (!loggedInUser || !userRole) {
   window.location.href = "login.html";
 }
 
@@ -41,8 +42,8 @@ async function loadDashboardData() {
 function renderDashboard() {
   let visibleLeads = [...leads];
 
-  // Role-based filtering
-  if (loggedInUser !== "Manager" && loggedInUser !== "Admin") {
+  // 🔒 Role-based filtering
+  if (userRole !== "Manager" && userRole !== "Admin") {
     visibleLeads = visibleLeads.filter((lead) => lead.lead_owner === loggedInUser);
   }
 
@@ -68,7 +69,7 @@ function renderDashboard() {
     .reduce((sum, l) => sum + (l.order_value || 0), 0);
 
   const titlePrefix =
-    loggedInUser === "Manager" || loggedInUser === "Admin"
+    userRole === "Manager" || userRole === "Admin"
       ? "Team"
       : "My";
 
