@@ -3,9 +3,10 @@ const saveLeadBtn = document.getElementById("saveLeadBtn");
 const pageTitle = document.getElementById("pageTitle");
 
 const loggedInUser = localStorage.getItem("loggedInUser");
+const userRole = localStorage.getItem("userRole");
 const editLeadId = localStorage.getItem("editLeadId");
 
-if (!loggedInUser) {
+if (!loggedInUser || !userRole) {
   window.location.href = "login.html";
 }
 
@@ -87,8 +88,8 @@ async function loadLeadForEdit(leadId) {
 
     // 🔒 FRONTEND PERMISSION LOCK
     if (
-      loggedInUser !== "Manager" &&
-      loggedInUser !== "Admin" &&
+      userRole !== "Manager" &&
+      userRole !== "Admin" &&
       leadOwner !== loggedInUser
     ) {
       alert("Permission denied. You can only edit your own leads.");
@@ -105,6 +106,11 @@ async function loadLeadForEdit(leadId) {
     document.getElementById("lead_owner").value = lead["Lead Owner"] || "";
     document.getElementById("status").value = lead["Status"] || "New";
     document.getElementById("remarks").value = lead["Remarks"] || "";
+
+    // 🔒 Agent cannot change owner manually while editing
+    if (userRole === "Agent") {
+      document.getElementById("lead_owner").setAttribute("readonly", true);
+    }
 
     saveLeadBtn.innerText = "Update Lead";
   } catch (error) {
@@ -145,7 +151,8 @@ form.addEventListener("submit", async function (e) {
         product_category,
         status,
         remarks,
-        requested_by: loggedInUser
+        requested_by: loggedInUser,
+        requested_role: userRole
       };
 
       const res = await fetch(API_URL, {
