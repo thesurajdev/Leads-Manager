@@ -13,15 +13,16 @@
     <aside class="sidebar">
       <div class="sidebar-logo">
         <h2>Sales CRM</h2>
+        <span class="sidebar-mini">CRM</span>
       </div>
 
       <nav class="sidebar-nav">
-        <a href="dashboard.html" class="active">Dashboard</a>
-        <a href="leads.html">Leads</a>
-        <a href="add-lead.html">Add Lead</a>
-        <a href="followups.html">Follow-ups</a>
-        <a href="my-work.html">My Work Queue</a>
-        <a href="reports.html" id="reportsLink">Reports</a>
+        <a href="index.html" data-icon="⌂">Home</a>
+        <a href="dashboard.html" data-icon="▦">Dashboard</a>
+        <a href="leads.html" data-icon="◎">Leads</a>
+        <a href="add-lead.html" data-icon="+">Add Lead</a>
+        <a href="followups.html" data-icon="↻">Follow-ups</a>
+        <a href="reports.html" id="reportsLink" data-icon="≋">Reports</a>
       </nav>
 
       <div class="sidebar-footer">
@@ -29,14 +30,19 @@
       </div>
     </aside>
 
+    <div id="sidebarBackdrop" class="sidebar-backdrop" aria-hidden="true"></div>
+
     <!-- Main Area -->
     <div class="main-wrapper">
 
       <!-- Topbar -->
       <header class="topbar">
-        <div>
-          <h1 class="page-title">Dashboard</h1>
-          <p class="page-subtitle">Welcome back to your CRM workspace</p>
+        <div class="topbar-left">
+          <button id="sidebarToggle" class="icon-btn" type="button" aria-label="Toggle sidebar">☰</button>
+          <div>
+            <h1 class="page-title">Dashboard</h1>
+            <p class="page-subtitle">Welcome back to your CRM workspace</p>
+          </div>
         </div>
 
         <div class="topbar-user">

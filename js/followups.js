@@ -81,9 +81,9 @@ function createRow(lead) {
 }
 
 function renderFollowups() {
-  todayFollowupsBody.innerHTML = "";
-  overdueFollowupsBody.innerHTML = "";
-  upcomingFollowupsBody.innerHTML = "";
+  const todayRows = [];
+  const overdueRows = [];
+  const upcomingRows = [];
 
   let visibleLeads = [...leads];
 
@@ -99,25 +99,28 @@ function renderFollowups() {
     const nextDate = lead.next_followup_date;
 
     if (nextDate === today) {
-      todayFollowupsBody.innerHTML += createRow(lead);
+      todayRows.push(createRow(lead));
     } else if (nextDate < today) {
-      overdueFollowupsBody.innerHTML += createRow(lead);
+      overdueRows.push(createRow(lead));
     } else {
-      upcomingFollowupsBody.innerHTML += createRow(lead);
+      upcomingRows.push(createRow(lead));
     }
   });
 
-  if (!todayFollowupsBody.innerHTML) {
-    todayFollowupsBody.innerHTML = `<tr><td colspan="7" style="text-align:center;">No follow-ups for today.</td></tr>`;
-  }
+  todayFollowupsBody.innerHTML =
+    todayRows.length > 0
+      ? todayRows.join("")
+      : `<tr><td colspan="7" style="text-align:center;">No follow-ups for today.</td></tr>`;
 
-  if (!overdueFollowupsBody.innerHTML) {
-    overdueFollowupsBody.innerHTML = `<tr><td colspan="7" style="text-align:center;">No overdue follow-ups.</td></tr>`;
-  }
+  overdueFollowupsBody.innerHTML =
+    overdueRows.length > 0
+      ? overdueRows.join("")
+      : `<tr><td colspan="7" style="text-align:center;">No overdue follow-ups.</td></tr>`;
 
-  if (!upcomingFollowupsBody.innerHTML) {
-    upcomingFollowupsBody.innerHTML = `<tr><td colspan="7" style="text-align:center;">No upcoming follow-ups.</td></tr>`;
-  }
+  upcomingFollowupsBody.innerHTML =
+    upcomingRows.length > 0
+      ? upcomingRows.join("")
+      : `<tr><td colspan="7" style="text-align:center;">No upcoming follow-ups.</td></tr>`;
 }
 
 function openLead(id) {

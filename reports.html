@@ -7,73 +7,110 @@
   <link rel="stylesheet" href="css/style.css" />
 </head>
 <body>
-  <div class="container">
-    <h1>Pivot Reports</h1>
+  <div class="app-layout">
+    <!-- Sidebar -->
+    <aside class="sidebar">
+      <div class="sidebar-logo">
+        <h2>Sales CRM</h2>
+        <span class="sidebar-mini">CRM</span>
+      </div>
 
-    <div class="nav-links">
-      <a href="index.html">Home</a>
-      <a href="dashboard.html">Dashboard</a>
-      <a href="leads.html">View Leads</a>
-      <a href="followups.html">Follow-ups</a>
-    </div>
+      <nav class="sidebar-nav">
+        <a href="index.html" data-icon="⌂">Home</a>
+        <a href="dashboard.html" data-icon="▦">Dashboard</a>
+        <a href="leads.html" data-icon="◎">Leads</a>
+        <a href="add-lead.html" data-icon="+">Add Lead</a>
+        <a href="followups.html" data-icon="↻">Follow-ups</a>
+        <a href="reports.html" id="reportsLink" data-icon="≋">Reports</a>
+      </nav>
 
-    <div id="reportAccessMessage" style="margin-top:20px;"></div>
+      <div class="sidebar-footer">
+        <button id="logoutBtn" class="logout-btn">Logout</button>
+      </div>
+    </aside>
 
-    <div id="reportBuilder" style="display:none; margin-top: 30px;">
-      <div class="filters-box">
-        <select id="rowField">
-          <option value="lead_owner">Lead Owner</option>
-          <option value="lead_source">Lead Source</option>
-          <option value="product_category">Product Category</option>
-          <option value="status">Status</option>
-          <option value="lead_status">Lead Status</option>
-        </select>
+    <div id="sidebarBackdrop" class="sidebar-backdrop" aria-hidden="true"></div>
 
-        <select id="columnField">
-          <option value="">No Column</option>
-          <option value="status">Status</option>
-          <option value="lead_source">Lead Source</option>
-          <option value="product_category">Product Category</option>
-          <option value="lead_owner">Lead Owner</option>
-        </select>
-
-        <select id="valueField">
-          <option value="count">Count of Leads</option>
-          <option value="sum_order_value">Sum of Order Value</option>
-        </select>
-
-        <select id="filterField">
-          <option value="">No Filter</option>
-          <option value="lead_owner">Lead Owner</option>
-          <option value="lead_source">Lead Source</option>
-          <option value="product_category">Product Category</option>
-          <option value="status">Status</option>
-          <option value="lead_status">Lead Status</option>
-        </select>
-
-        <input type="text" id="filterValue" placeholder="Filter value (optional)" />
-        <input type="date" id="dateFrom" />
-        <input type="date" id="dateTo" />
-        <div style="margin-top:10px;">
-          <button onclick="setDatePreset('today')">Today</button>
-          <button onclick="setDatePreset('week')">This Week</button>
-          <button onclick="setDatePreset('month')">This Month</button>
-          <button onclick="setDatePreset('lastMonth')">Last Month</button>
-          <button onclick="setDatePreset('clear')" style="background:#ef4444;">Clear</button>
+    <!-- Main Area -->
+    <div class="main-wrapper">
+      <header class="topbar">
+        <div class="topbar-left">
+          <button id="sidebarToggle" class="icon-btn" type="button" aria-label="Toggle sidebar">☰</button>
+          <div>
+            <h1 class="page-title">Reports</h1>
+            <p class="page-subtitle">Build pivot-style reports and export CSV</p>
+          </div>
         </div>
 
-        <button id="generateReportBtn">Generate Report</button>
-      </div>
+        <div class="topbar-user">
+          <span id="topbarUsername">User</span>
+          <span id="topbarRole" class="role-badge">Agent</span>
+        </div>
+      </header>
 
-      <div style="margin-top:20px;">
-        <button onclick="exportReportCSV()" style="background:#10b981;">Export Report CSV</button>
-      </div>
+      <main class="page-content">
+        <div class="container">
+          <div id="reportAccessMessage" style="margin-top:20px;"></div>
 
-      <div id="reportOutput" style="margin-top:30px;"></div>
+          <div id="reportBuilder" style="display:none; margin-top: 30px;">
+            <div class="filters-box">
+              <select id="rowField">
+                <option value="lead_owner">Lead Owner</option>
+                <option value="lead_source">Lead Source</option>
+                <option value="product_category">Product Category</option>
+                <option value="status">Status</option>
+                <option value="lead_status">Lead Status</option>
+              </select>
+
+              <select id="columnField">
+                <option value="">No Column</option>
+                <option value="status">Status</option>
+                <option value="lead_source">Lead Source</option>
+                <option value="product_category">Product Category</option>
+                <option value="lead_owner">Lead Owner</option>
+              </select>
+
+              <select id="valueField">
+                <option value="count">Count of Leads</option>
+                <option value="sum_order_value">Sum of Order Value</option>
+              </select>
+
+              <select id="filterField">
+                <option value="">No Filter</option>
+                <option value="lead_owner">Lead Owner</option>
+                <option value="lead_source">Lead Source</option>
+                <option value="product_category">Product Category</option>
+                <option value="status">Status</option>
+                <option value="lead_status">Lead Status</option>
+              </select>
+
+              <input type="text" id="filterValue" placeholder="Filter value (optional)" />
+              <input type="date" id="dateFrom" />
+              <input type="date" id="dateTo" />
+              <div style="margin-top:10px;">
+                <button onclick="setDatePreset('today')">Today</button>
+                <button onclick="setDatePreset('week')">This Week</button>
+                <button onclick="setDatePreset('month')">This Month</button>
+                <button onclick="setDatePreset('lastMonth')">Last Month</button>
+                <button onclick="setDatePreset('clear')" style="background:#ef4444;">Clear</button>
+              </div>
+
+              <button id="generateReportBtn">Generate Report</button>
+            </div>
+
+            <div style="margin-top:20px;">
+              <button onclick="exportReportCSV()" style="background:#10b981;">Export Report CSV</button>
+            </div>
+
+            <div id="reportOutput" style="margin-top:30px;"></div>
+          </div>
+        </div>
+      </main>
     </div>
   </div>
 
   <script src="js/config.js"></script>
+  <script src="js/layout.js"></script>
   <script src="js/reports.js"></script>
 </body>
 </html>

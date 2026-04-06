@@ -7,32 +7,62 @@
   <link rel="stylesheet" href="css/style.css" />
 </head>
 <body>
-  <div class="container">
-    <h1>Sales CRM</h1>
-    <p id="welcomeUser">Welcome to your custom CRM system.</p>
+  <div class="app-layout">
+    <!-- Sidebar -->
+    <aside class="sidebar">
+      <div class="sidebar-logo">
+        <h2>Sales CRM</h2>
+        <span class="sidebar-mini">CRM</span>
+      </div>
 
-    <div class="nav-links">
-      <a href="dashboard.html">Dashboard</a>
-      <a href="leads.html">View Leads</a>
-      <a href="add-lead.html">Add New Lead</a>
-      <a href="followups.html">Follow-ups</a>
-      <a href="reports.html">Reports</a>
-      <a href="login.html" onclick="logoutUser()">Logout</a>
+      <nav class="sidebar-nav">
+        <a href="index.html" data-icon="⌂">Home</a>
+        <a href="dashboard.html" data-icon="▦">Dashboard</a>
+        <a href="leads.html" data-icon="◎">Leads</a>
+        <a href="add-lead.html" data-icon="+">Add Lead</a>
+        <a href="followups.html" data-icon="↻">Follow-ups</a>
+        <a href="reports.html" id="reportsLink" data-icon="≋">Reports</a>
+      </nav>
+
+      <div class="sidebar-footer">
+        <button id="logoutBtn" class="logout-btn">Logout</button>
+      </div>
+    </aside>
+
+    <div id="sidebarBackdrop" class="sidebar-backdrop" aria-hidden="true"></div>
+
+    <!-- Main Area -->
+    <div class="main-wrapper">
+      <header class="topbar">
+        <div class="topbar-left">
+          <button id="sidebarToggle" class="icon-btn" type="button" aria-label="Toggle sidebar">☰</button>
+          <div>
+            <h1 class="page-title">Home</h1>
+            <p class="page-subtitle" id="welcomeUser">Welcome to your custom CRM system.</p>
+          </div>
+        </div>
+
+        <div class="topbar-user">
+          <span id="topbarUsername">User</span>
+          <span id="topbarRole" class="role-badge">Agent</span>
+        </div>
+      </header>
+
+      <main class="page-content">
+        <div class="container">
+          <h2>Quick actions</h2>
+          <div class="nav-links">
+            <a href="dashboard.html">Open Dashboard</a>
+            <a href="leads.html">View Leads</a>
+            <a href="add-lead.html">Add New Lead</a>
+            <a href="followups.html">Follow-ups</a>
+            <a href="reports.html">Reports</a>
+          </div>
+        </div>
+      </main>
     </div>
   </div>
 
-  <script>
-    const loggedInUser = localStorage.getItem("loggedInUser");
-
-    if (!loggedInUser) {
-      window.location.href = "login.html";
-    } else {
-      document.getElementById("welcomeUser").innerText = `Welcome, ${loggedInUser}`;
-    }
-
-    function logoutUser() {
-      localStorage.removeItem("loggedInUser");
-    }
-  </script>
+  <script src="js/layout.js"></script>
 </body>
 </html>

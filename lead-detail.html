@@ -7,78 +7,117 @@
   <link rel="stylesheet" href="css/style.css" />
 </head>
 <body>
-  <div class="container">
-    <h1>Lead Detail</h1>
+  <div class="app-layout">
+    <!-- Sidebar -->
+    <aside class="sidebar">
+      <div class="sidebar-logo">
+        <h2>Sales CRM</h2>
+        <span class="sidebar-mini">CRM</span>
+      </div>
 
-    <div class="nav-links">
-      <a href="index.html">Home</a>
-      <a href="leads.html">Back to Leads</a>
-    </div>
+      <nav class="sidebar-nav">
+        <a href="index.html" data-icon="⌂">Home</a>
+        <a href="dashboard.html" data-icon="▦">Dashboard</a>
+        <a href="leads.html" data-icon="◎">Leads</a>
+        <a href="add-lead.html" data-icon="+">Add Lead</a>
+        <a href="followups.html" data-icon="↻">Follow-ups</a>
+        <a href="reports.html" id="reportsLink" data-icon="≋">Reports</a>
+      </nav>
 
-    <div id="leadDetailBox" style="margin-top: 30px;"></div>
+      <div class="sidebar-footer">
+        <button id="logoutBtn" class="logout-btn">Logout</button>
+      </div>
+    </aside>
 
-    <hr style="margin: 30px 0;" />
+    <div id="sidebarBackdrop" class="sidebar-backdrop" aria-hidden="true"></div>
 
-    <h2>Add Follow-up</h2>
-    <form id="followupForm">
-      <label>Follow-up Date</label>
-      <input type="date" id="followup_date" required />
+    <!-- Main Area -->
+    <div class="main-wrapper">
+      <header class="topbar">
+        <div class="topbar-left">
+          <button id="sidebarToggle" class="icon-btn" type="button" aria-label="Toggle sidebar">☰</button>
+          <div>
+            <h1 class="page-title">Lead Detail</h1>
+            <p class="page-subtitle">View lead info, add follow-ups, and track history</p>
+          </div>
+        </div>
 
-      <label>Follow-up Type</label>
-      <select id="followup_type">
-        <option>Call</option>
-        <option>WhatsApp</option>
-        <option>Email</option>
-        <option>Meeting</option>
-        <option>Demo</option>
-        <option>Visit</option>
-      </select>
+        <div class="topbar-user">
+          <span id="topbarUsername">User</span>
+          <span id="topbarRole" class="role-badge">Agent</span>
+        </div>
+      </header>
 
-      <label>Follow-up Status</label>
-      <select id="followup_status">
-        <option>No Response</option>
-        <option>Interested</option>
-        <option>Call Back Later</option>
-        <option>Quotation Sent</option>
-        <option>Negotiation</option>
-        <option>Won</option>
-        <option>Lost</option>
-      </select>
+      <main class="page-content">
+        <div class="container">
+          <div id="leadDetailBox" style="margin-top: 30px;"></div>
 
-      <label>Remarks</label>
-      <textarea id="followup_remarks" required></textarea>
+          <hr style="margin: 30px 0;" />
 
-      <label>Next Follow-up Date</label>
-      <input type="date" id="next_followup_date" />
+          <h2>Add Follow-up</h2>
+          <form id="followupForm">
+            <label>Follow-up Date</label>
+            <input type="date" id="followup_date" required />
 
-      <button type="submit">Add Follow-up</button>
-    </form>
+            <label>Follow-up Type</label>
+            <select id="followup_type">
+              <option>Call</option>
+              <option>WhatsApp</option>
+              <option>Email</option>
+              <option>Meeting</option>
+              <option>Demo</option>
+              <option>Visit</option>
+            </select>
 
-    <hr style="margin: 30px 0;" />
+            <label>Follow-up Status</label>
+            <select id="followup_status">
+              <option>No Response</option>
+              <option>Interested</option>
+              <option>Call Back Later</option>
+              <option>Quotation Sent</option>
+              <option>Negotiation</option>
+              <option>Won</option>
+              <option>Lost</option>
+            </select>
 
-    <h2>Follow-up History</h2>
-    <div class="table-wrapper">
-      <table>
-        <thead>
-          <tr>
-            <th>Date</th>
-            <th>Type</th>
-            <th>Status</th>
-            <th>Remarks</th>
-            <th>Next Follow-up</th>
-          </tr>
-        </thead>
-        <tbody id="followupTableBody"></tbody>
-      </table>
-    </div>
+            <label>Remarks</label>
+            <textarea id="followup_remarks" required></textarea>
 
-    <h2 style="margin-top: 40px;">Lead Activity Timeline</h2>
-    <div id="leadTimeline" class="timeline-box">
-      <p>Loading timeline...</p>
+            <label>Next Follow-up Date</label>
+            <input type="date" id="next_followup_date" />
+
+            <button type="submit">Add Follow-up</button>
+          </form>
+
+          <hr style="margin: 30px 0;" />
+
+          <h2>Follow-up History</h2>
+          <div class="table-wrapper">
+            <table>
+              <thead>
+                <tr>
+                  <th>Date</th>
+                  <th>Type</th>
+                  <th>Status</th>
+                  <th>Remarks</th>
+                  <th>Next Follow-up</th>
+                </tr>
+              </thead>
+              <tbody id="followupTableBody"></tbody>
+            </table>
+          </div>
+
+          <h2 style="margin-top: 40px;">Lead Activity Timeline</h2>
+          <div id="leadTimeline" class="timeline-box">
+            <p>Loading timeline...</p>
+          </div>
+        </div>
+      </main>
     </div>
   </div>
 
   <script src="js/config.js"></script>
+  <script src="js/layout.js"></script>
   <script src="js/lead-detail.js"></script>
 </body>
 </html>

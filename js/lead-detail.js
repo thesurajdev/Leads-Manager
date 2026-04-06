@@ -116,8 +116,6 @@ function renderLeadDetail() {
 function renderFollowups() {
   const leadFollowups = followups.filter(f => f.lead_id === lead.lead_id);
 
-  followupTableBody.innerHTML = "";
-
   if (leadFollowups.length === 0) {
     followupTableBody.innerHTML = `
       <tr>
@@ -127,8 +125,7 @@ function renderFollowups() {
     return;
   }
 
-  leadFollowups.forEach(f => {
-    followupTableBody.innerHTML += `
+  const rows = leadFollowups.map((f) => `
       <tr>
         <td>${f.followup_date}</td>
         <td>${f.followup_type}</td>
@@ -136,8 +133,9 @@ function renderFollowups() {
         <td>${f.remarks}</td>
         <td>${f.next_followup_date || "-"}</td>
       </tr>
-    `;
-  });
+    `);
+
+  followupTableBody.innerHTML = rows.join("");
 }
 
 function renderTimeline() {
@@ -145,7 +143,8 @@ function renderTimeline() {
     .filter(f => f.lead_id === lead.lead_id)
     .sort((a, b) => new Date(a.followup_date) - new Date(b.followup_date));
 
-  let timelineHTML = `
+  const items = [];
+  items.push(`
     <div class="timeline-item">
       <div class="timeline-dot"></div>
       <div class="timeline-content">
@@ -156,10 +155,10 @@ function renderTimeline() {
         <p><strong>Remarks:</strong> ${lead.remarks || "-"}</p>
       </div>
     </div>
-  `;
+  `);
 
-  leadFollowups.forEach(f => {
-    timelineHTML += `
+  leadFollowups.forEach((f) => {
+    items.push(`
       <div class="timeline-item">
         <div class="timeline-dot"></div>
         <div class="timeline-content">
@@ -171,10 +170,10 @@ function renderTimeline() {
           <p><strong>Timestamp:</strong> ${f.created_timestamp || "-"}</p>
         </div>
       </div>
-    `;
+    `);
   });
 
-  timelineBox.innerHTML = timelineHTML;
+  timelineBox.innerHTML = items.join("");
 }
 
 followupForm.addEventListener("submit", async function (e) {

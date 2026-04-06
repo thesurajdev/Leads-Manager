@@ -162,8 +162,6 @@ function resetFilters() {
 }
 
 function renderLeads(data) {
-  leadsTableBody.innerHTML = "";
-
   if (data.length === 0) {
     leadsTableBody.innerHTML = `
       <tr>
@@ -173,10 +171,15 @@ function renderLeads(data) {
     return;
   }
 
-  data.forEach(lead => {
-    const priority = getLeadPriority(lead);
+  const isManagerOrAdmin = userRole === "Manager" || userRole === "Admin";
 
-    leadsTableBody.innerHTML += `
+  const rows = data.map((lead) => {
+    const priority = getLeadPriority(lead);
+    const reassignBtn = isManagerOrAdmin
+      ? `<button onclick="reassignLead('${lead.lead_id}', '${String(lead.lead_owner || "").replace(/'/g, "\\'")}')" style="margin-top:6px;background:#f59e0b;">Reassign</button>`
+      : "";
+
+    return `
       <tr>
         <td>${lead.lead_id}</td>
         <td>${lead.customer_name}</td>
@@ -190,11 +193,11 @@ function renderLeads(data) {
         <td>
           <span style="
             padding: 4px 8px;
-            border-radius: 6px;
+            border-radius: 10px;
             color: white;
             background: ${priority.color};
             font-size: 12px;
-            font-weight: 600;
+            font-weight: 700;
             display: inline-block;
           ">
             ${priority.label}
@@ -202,16 +205,14 @@ function renderLeads(data) {
         </td>
         <td>
           <button onclick="viewLead(${lead.id})">View</button>
-          <button onclick="editLead('${lead.lead_id}')" style="margin-top:6px;background:#16a34a;">Edit</button>
-          ${
-            userRole === "Manager" || userRole === "Admin"
-              ? `<button onclick="reassignLead('${lead.lead_id}', '${lead.lead_owner}')" style="margin-top:6px;background:#f59e0b;">Reassign</button>`
-              : ""
-          }
+          <button onclick="editLead('${String(lead.lead_id || "").replace(/'/g, "\\'")}')" style="margin-top:6px;background:#16a34a;">Edit</button>
+          ${reassignBtn}
         </td>
       </tr>
     `;
   });
+
+  leadsTableBody.innerHTML = rows.join("");
 }
 
 function viewLead(id) {

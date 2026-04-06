@@ -1,0 +1,290 @@
+function outputJSON(data) {
+    return ContentService
+      .createTextOutput(JSON.stringify(data))
+      .setMimeType(ContentService.MimeType.JSON);
+  }
+  
+  function doGet(e) {
+    const action = e.parameter.action || "leads";
+    const ss = SpreadsheetApp.getActiveSpreadsheet();
+  
+    // 🔥 MASTER DATA
+    if (action === "master") {
+      const sheet = ss.getSheetByName("Master_Data");
+      const data = sheet.getDataRange().getValues();
+  
+      const headers = data[0];
+      const rows = data.slice(1);
+  
+      const master = rows.map(row => {
+        let obj = {};
+        headers.forEach((header, index) => {
+          obj[header] = row[index];
+        });
+        return obj;
+      });
+  
+      return outputJSON(master);
+    }
+  
+    // 🔥 FOLLOWUPS
+    if (action === "followups") {
+      const sheet = ss.getSheetByName("Followups");
+      const data = sheet.getDataRange().getValues();
+  
+      const headers = data[0];
+      const rows = data.slice(1);
+  
+      const followups = rows.map(row => {
+        let obj = {};
+        headers.forEach((header, index) => {
+          obj[header] = row[index];
+        });
+        return obj;
+      });
+  
+      return outputJSON(followups);
+    }
+  
+    // 🔥 DEFAULT = LEADS
+    const sheet = ss.getSheetByName("Leads_Master");
+    const data = sheet.getDataRange().getValues();
+  
+    const headers = data[0];
+    const rows = data.slice(1);
+  
+    const leads = rows.map(row => {
+      let obj = {};
+      headers.forEach((header, index) => {
+        obj[header] = row[index];
+      });
+      return obj;
+    });
+  
+    return outputJSON(leads);
+  }
+  
+  function doPost(e) {
+    try {
+      const ss = SpreadsheetApp.getActiveSpreadsheet();
+      const data = JSON.parse(e.postData.contents);
+  
+      // 🔐 LOGIN CHECK
+      if (data.type === "login") {
+        const sheet = ss.getSheetByName("Users");
+        const dataRows = sheet.getDataRange().getValues();
+  
+        for (let i = 1; i < dataRows.length; i++) {
+          const username = String(dataRows[i][0] || "");
+          const password = String(dataRows[i][1] || "");
+          const role = String(dataRows[i][2] || "");
+  
+          if (
+            username === data.username &&
+            password === data.password
+          ) {
+            return outputJSON({
+              success: true,
+              username,
+              role
+            });
+          }
+        }
+  
+        return outputJSON({
+          success: false,
+          message: "Invalid username or password"
+        });
+      }
+  
+      // 🔥 REASSIGN LEAD (Manager/Admin only)
+      if (data.type === "reassignLead") {
+        const leadSheet = ss.getSheetByName("Leads_Master");
+        const leadData = leadSheet.getDataRange().getValues();
+  
+        const requestedRole = String(data.requested_role || "");
+  
+        const isManagerOrAdmin =
+          requestedRole === "Manager" || requestedRole === "Admin";
+  
+        if (!isManagerOrAdmin) {
+          return outputJSON({
+            success: false,
+            permission_denied: true,
+            message: "Only Manager/Admin can reassign leads"
+          });
+        }
+  
+        for (let i = 1; i < leadData.length; i++) {
+          if (String(leadData[i][0]) === String(data.lead_id)) {
+            // Column C = Lead Owner
+            leadSheet.getRange(i + 1, 3).setValue(data.new_owner || "");
+  
+            return outputJSON({
+              success: true,
+              message: "Lead reassigned successfully"
+            });
+          }
+        }
+  
+        return outputJSON({
+          success: false,
+          message: "Lead not found for reassignment"
+        });
+      }
+  
+      // 🔥 UPDATE EXISTING LEAD
+      if (data.type === "updateLead") {
+        const leadSheet = ss.getSheetByName("Leads_Master");
+        const leadData = leadSheet.getDataRange().getValues();
+  
+        for (let i = 1; i < leadData.length; i++) {
+          if (String(leadData[i][0]) === String(data.lead_id)) {
+            const existingOwner = String(leadData[i][2] || "");
+            const requestedBy = String(data.requested_by || "");
+            const requestedRole = String(data.requested_role || "");
+  
+            const isManagerOrAdmin =
+              requestedRole === "Manager" || requestedRole === "Admin";
+  
+            const isOwner = existingOwner === requestedBy;
+  
+            if (!isManagerOrAdmin && !isOwner) {
+              return outputJSON({
+                success: false,
+                permission_denied: true,
+                message: "You can only edit your own leads"
+              });
+            }
+  
+            // Update row values
+            leadSheet.getRange(i + 1, 3).setValue(data.lead_owner || "");         // C
+            leadSheet.getRange(i + 1, 4).setValue(data.customer_name || "");      // D
+            leadSheet.getRange(i + 1, 5).setValue(data.contact_no || "");         // E
+            leadSheet.getRange(i + 1, 6).setValue(data.email_id || "");           // F
+            leadSheet.getRange(i + 1, 7).setValue(data.lead_source || "");        // G
+            leadSheet.getRange(i + 1, 8).setValue(data.product_category || "");   // H
+            leadSheet.getRange(i + 1, 9).setValue(data.status || "");             // I
+            leadSheet.getRange(i + 1, 10).setValue(data.remarks || "");           // J
+  
+            return outputJSON({
+              success: true,
+              message: "Lead updated successfully"
+            });
+          }
+        }
+  
+        return outputJSON({
+          success: false,
+          message: "Lead not found for update"
+        });
+      }
+  
+      // 🔥 FOLLOW-UP SAVE + LEAD UPDATE
+      if (data.type === "followup") {
+        const followSheet = ss.getSheetByName("Followups");
+  
+        followSheet.appendRow([
+          data.followup_id || "",
+          data.lead_id || "",
+          data.customer_name || "",
+          data.contact_no || "",
+          data.followup_date || "",
+          data.followup_type || "",
+          data.followup_status || "",
+          data.remarks || "",
+          data.next_followup_date || "",
+          data.created_by || "",
+          data.created_timestamp || ""
+        ]);
+  
+        // ALSO UPDATE LEADS_MASTER
+        const leadSheet = ss.getSheetByName("Leads_Master");
+        const leadData = leadSheet.getDataRange().getValues();
+  
+        for (let i = 1; i < leadData.length; i++) {
+          if (String(leadData[i][0]) === String(data.lead_id)) {
+            leadSheet.getRange(i + 1, 9).setValue(data.followup_status || "");
+            leadSheet.getRange(i + 1, 10).setValue(data.remarks || "");
+  
+            const finalLeadStatus =
+              data.followup_status === "Won" || data.followup_status === "Lost"
+                ? "Closed"
+                : "Open";
+  
+            leadSheet.getRange(i + 1, 11).setValue(finalLeadStatus);
+            leadSheet.getRange(i + 1, 13).setValue(data.next_followup_date || "");
+  
+            break;
+          }
+        }
+  
+        return outputJSON({
+          success: true,
+          message: "Follow-up added and lead updated successfully"
+        });
+      }
+  
+      // 🔥 NEW LEAD SAVE WITH BACKEND DUPLICATE CHECK
+      const leadSheet = ss.getSheetByName("Leads_Master");
+      const leadData = leadSheet.getDataRange().getValues();
+  
+      const newContact = String(data.contact_no || "").trim();
+      const newEmail = String(data.email_id || "").trim().toLowerCase();
+  
+      for (let i = 1; i < leadData.length; i++) {
+        const existingLeadId = String(leadData[i][0] || "");
+        const existingOwner = String(leadData[i][2] || "");
+        const existingCustomer = String(leadData[i][3] || "");
+        const existingContact = String(leadData[i][4] || "").trim();
+        const existingEmail = String(leadData[i][5] || "").trim().toLowerCase();
+        const existingStatus = String(leadData[i][8] || "");
+        const existingLeadStatus = String(leadData[i][10] || "");
+  
+        const samePhone = existingContact && newContact && existingContact === newContact;
+        const sameEmail = existingEmail && newEmail && existingEmail === newEmail;
+  
+        if ((samePhone || sameEmail) && existingLeadStatus === "Open") {
+          return outputJSON({
+            success: false,
+            duplicate: true,
+            message: "Duplicate open lead found",
+            duplicate_data: {
+              lead_id: existingLeadId,
+              customer_name: existingCustomer,
+              lead_owner: existingOwner,
+              status: existingStatus
+            }
+          });
+        }
+      }
+  
+      // 🔥 SAVE NEW LEAD
+      leadSheet.appendRow([
+        data.lead_id || "",
+        data.created_date || "",
+        data.lead_owner || "",
+        data.customer_name || "",
+        data.contact_no || "",
+        data.email_id || "",
+        data.lead_source || "",
+        data.product_category || "",
+        data.status || "",
+        data.remarks || "",
+        data.lead_status || "",
+        data.order_value || 0,
+        data.next_followup_date || ""
+      ]);
+  
+      return outputJSON({
+        success: true,
+        message: "Lead added successfully"
+      });
+  
+    } catch (error) {
+      return outputJSON({
+        success: false,
+        error: error.toString()
+      });
+    }
+  }

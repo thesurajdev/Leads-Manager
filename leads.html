@@ -7,68 +7,95 @@
   <link rel="stylesheet" href="css/style.css" />
 </head>
 <body>
-  <div class="container">
-    <h1>Leads List</h1>
+  <div class="app-layout">
+    <!-- Sidebar -->
+    <aside class="sidebar">
+      <div class="sidebar-logo">
+        <h2>Sales CRM</h2>
+        <span class="sidebar-mini">CRM</span>
+      </div>
 
-    <div class="nav-links">
-      <a href="index.html">Home</a>
-      <a href="dashboard.html">Dashboard</a>
-      <a href="add-lead.html">Add New Lead</a>
-      <a href="followups.html">Follow-ups</a>
-      <a href="reports.html">Reports</a>
-      <a href="#" onclick="logout()">Logout</a>
-    </div>
+      <nav class="sidebar-nav">
+        <a href="index.html" data-icon="⌂">Home</a>
+        <a href="dashboard.html" data-icon="▦">Dashboard</a>
+        <a href="leads.html" data-icon="◎">Leads</a>
+        <a href="add-lead.html" data-icon="+">Add Lead</a>
+        <a href="followups.html" data-icon="↻">Follow-ups</a>
+        <a href="reports.html" id="reportsLink" data-icon="≋">Reports</a>
+      </nav>
 
-    <div class="filters-box" style="margin: 20px 0;">
-      <input type="text" id="searchInput" placeholder="Search by Name / Phone / Email / Lead ID" />
+      <div class="sidebar-footer">
+        <button id="logoutBtn" class="logout-btn">Logout</button>
+      </div>
+    </aside>
 
-      <select id="statusFilter">
-        <option value="">All Status</option>
-      </select>
+    <div id="sidebarBackdrop" class="sidebar-backdrop" aria-hidden="true"></div>
 
-      <select id="sourceFilter">
-        <option value="">All Sources</option>
-      </select>
+    <!-- Main Area -->
+    <div class="main-wrapper">
+      <header class="topbar">
+        <div class="topbar-left">
+          <button id="sidebarToggle" class="icon-btn" type="button" aria-label="Toggle sidebar">☰</button>
+          <div>
+            <h1 class="page-title">Leads</h1>
+            <p class="page-subtitle">Search, filter, export, and manage leads</p>
+          </div>
+        </div>
 
-      <select id="productFilter">
-        <option value="">All Products</option>
-      </select>
+        <div class="topbar-user">
+          <span id="topbarUsername">User</span>
+          <span id="topbarRole" class="role-badge">Agent</span>
+        </div>
+      </header>
 
-      <button onclick="resetFilters()" style="background:#ef4444;">Reset Filters</button>
-      <button onclick="exportLeadsCSV()" style="background:#10b981;">Export CSV</button>
-    </div>
+      <main class="page-content">
+        <div class="container">
+          <div class="filters-box" style="margin: 20px 0;">
+            <input type="text" id="searchInput" placeholder="Search by Name / Phone / Email / Lead ID" />
 
-    <div class="table-wrapper">
-      <table>
-        <thead>
-          <tr>
-            <th>Lead ID</th>
-            <th>Customer</th>
-            <th>Contact</th>
-            <th>Email</th>
-            <th>Lead Source</th>
-            <th>Product</th>
-            <th>Status</th>
-            <th>Lead Owner</th>
-            <th>Next Follow-up</th>
-            <th>Priority</th>
-            <th>Actions</th>
-          </tr>
-        </thead>
-        <tbody id="leadsTableBody"></tbody>
-      </table>
+            <select id="statusFilter">
+              <option value="">All Status</option>
+            </select>
+
+            <select id="sourceFilter">
+              <option value="">All Sources</option>
+            </select>
+
+            <select id="productFilter">
+              <option value="">All Products</option>
+            </select>
+
+            <button onclick="resetFilters()" style="background:#ef4444;">Reset Filters</button>
+            <button onclick="exportLeadsCSV()" style="background:#10b981;">Export CSV</button>
+          </div>
+
+          <div class="table-wrapper">
+            <table>
+              <thead>
+                <tr>
+                  <th>Lead ID</th>
+                  <th>Customer</th>
+                  <th>Contact</th>
+                  <th>Email</th>
+                  <th>Lead Source</th>
+                  <th>Product</th>
+                  <th>Status</th>
+                  <th>Lead Owner</th>
+                  <th>Next Follow-up</th>
+                  <th>Priority</th>
+                  <th>Actions</th>
+                </tr>
+              </thead>
+              <tbody id="leadsTableBody"></tbody>
+            </table>
+          </div>
+        </div>
+      </main>
     </div>
   </div>
 
   <script src="js/config.js"></script>
+  <script src="js/layout.js"></script>
   <script src="js/leads.js"></script>
-
-  <script>
-    function logout() {
-      localStorage.removeItem("loggedInUser");
-      localStorage.removeItem("userRole");
-      window.location.href = "login.html";
-    }
-  </script>
 </body>
 </html>

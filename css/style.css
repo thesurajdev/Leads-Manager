@@ -1,27 +1,67 @@
+/* Design tokens */
+:root {
+  --bg: #f3f4f6;
+  --surface: #ffffff;
+  --text: #111827;
+  --muted: #6b7280;
+  --border: #e5e7eb;
+  --shadow: 0 8px 30px rgba(17, 24, 39, 0.08);
+  --shadow-sm: 0 4px 14px rgba(17, 24, 39, 0.06);
+
+  --primary: #2563eb;
+  --primary-600: #1d4ed8;
+  --danger: #dc2626;
+  --danger-600: #b91c1c;
+  --success: #16a34a;
+
+  --radius: 16px;
+  --radius-sm: 12px;
+  --ring: 0 0 0 3px rgba(37, 99, 235, 0.18);
+}
+
+/* Base */
+html, body {
+  height: 100%;
+}
+
 body {
-  font-family: Arial, sans-serif;
-  background: #f4f7fb;
   margin: 0;
   padding: 0;
+  background: var(--bg);
+  color: var(--text);
+  font-family: ui-sans-serif, system-ui, -apple-system, Segoe UI, Roboto, Arial, "Noto Sans", "Liberation Sans", sans-serif;
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+}
+
+h1, h2, h3 {
+  letter-spacing: -0.02em;
+}
+
+p {
+  color: var(--muted);
+  font-size: 14px;
+  line-height: 1.45;
+}
+
+a {
+  color: inherit;
+}
+
+:focus-visible {
+  outline: none;
+  box-shadow: var(--ring);
+  border-radius: 10px;
 }
 
 .container {
   max-width: 1100px;
-  margin: 40px auto;
-  background: white;
-  padding: 30px;
-  border-radius: 12px;
-  box-shadow: 0 4px 14px rgba(0, 0, 0, 0.08);
-}
-
-h1, h2 {
-  margin-bottom: 20px;
-  color: #222;
-}
-
-p {
-  color: #555;
-  font-size: 16px;
+  margin: 0 auto;
+  background: var(--surface);
+  padding: 26px;
+  border-radius: var(--radius);
+  border: 1px solid var(--border);
+  box-shadow: var(--shadow-sm);
 }
 
 .nav-links {
@@ -34,30 +74,39 @@ p {
 .nav-links a,
 button {
   display: inline-block;
-  background: #2563eb;
+  background: var(--primary);
   color: white;
   text-decoration: none;
-  padding: 12px 18px;
-  border-radius: 8px;
+  padding: 10px 14px;
+  border-radius: 12px;
   border: none;
   cursor: pointer;
   font-size: 14px;
+  font-weight: 700;
+  transition: transform 0.15s ease, opacity 0.15s ease, background 0.15s ease;
 }
 
 .nav-links a:hover,
 button:hover {
-  background: #1d4ed8;
+  background: var(--primary-600);
+}
+
+button:active,
+.nav-links a:active {
+  transform: translateY(1px);
 }
 
 input, select, textarea {
   width: 100%;
-  padding: 10px 12px;
+  padding: 11px 12px;
   margin-top: 6px;
   margin-bottom: 16px;
-  border: 1px solid #d1d5db;
-  border-radius: 8px;
+  border: 1px solid var(--border);
+  border-radius: 12px;
   font-size: 14px;
   box-sizing: border-box;
+  background: var(--surface);
+  color: var(--text);
 }
 
 label {
@@ -193,9 +242,9 @@ table th {
 
 .filters-box input,
 .filters-box select {
-  padding: 10px 12px;
-  border: 1px solid #d1d5db;
-  border-radius: 8px;
+  padding: 11px 12px;
+  border: 1px solid var(--border);
+  border-radius: 12px;
   min-width: 220px;
 }
 
@@ -212,13 +261,13 @@ table {
 
 table th,
 table td {
-  border: 1px solid #e5e7eb;
+  border: 1px solid var(--border);
   padding: 12px;
   text-align: left;
 }
 
 table th {
-  background: #f3f4f6;
+  background: #f9fafb;
 }
 
 
@@ -235,21 +284,18 @@ table th {
 
 
 * {
-  margin: 0;
-  padding: 0;
   box-sizing: border-box;
-  font-family: Arial, sans-serif;
-}
-
-body {
-  background: #f3f4f6;
-  color: #111827;
 }
 
 /* App Layout */
 .app-layout {
   display: flex;
   min-height: 100vh;
+}
+
+/* Mobile backdrop */
+.sidebar-backdrop {
+  display: none;
 }
 
 /* Sidebar */
@@ -264,6 +310,20 @@ body {
   position: sticky;
   top: 0;
   height: 100vh;
+  transition: width 0.2s ease, transform 0.2s ease;
+}
+
+.sidebar-logo {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 10px;
+}
+
+.sidebar-mini {
+  display: none;
+  font-weight: 800;
+  letter-spacing: 0.5px;
 }
 
 .sidebar-logo h2 {
@@ -286,6 +346,17 @@ body {
   transition: all 0.2s ease;
   font-size: 15px;
   font-weight: 500;
+  display: flex;
+  align-items: center;
+  gap: 10px;
+}
+
+.sidebar-nav a::before {
+  content: attr(data-icon);
+  width: 20px;
+  display: inline-flex;
+  justify-content: center;
+  opacity: 0.95;
 }
 
 .sidebar-nav a:hover,
@@ -329,6 +400,34 @@ body {
   display: flex;
   justify-content: space-between;
   align-items: center;
+  gap: 16px;
+}
+
+.topbar {
+  position: sticky;
+  top: 0;
+  z-index: 10;
+}
+
+.topbar-left {
+  display: flex;
+  align-items: center;
+  gap: 14px;
+}
+
+.icon-btn {
+  background: transparent;
+  color: #111827;
+  border: 1px solid #e5e7eb;
+  padding: 10px 12px;
+  border-radius: 12px;
+  cursor: pointer;
+  font-weight: 800;
+  line-height: 1;
+}
+
+.icon-btn:hover {
+  background: #f9fafb;
 }
 
 .page-title {
@@ -361,6 +460,39 @@ body {
 /* Content */
 .page-content {
   padding: 30px;
+}
+
+/* If a legacy .container is used inside app shell, neutralize big outer margins */
+.page-content .container {
+  margin: 0 auto;
+  max-width: 1100px;
+}
+
+/* Collapsed sidebar (desktop) */
+body.sidebar-collapsed .sidebar {
+  width: 86px;
+  padding-left: 14px;
+  padding-right: 14px;
+}
+
+body.sidebar-collapsed .sidebar-logo h2 {
+  display: none;
+}
+
+body.sidebar-collapsed .sidebar-mini {
+  display: inline-block;
+}
+
+body.sidebar-collapsed .sidebar-nav a {
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: clip;
+  padding-left: 12px;
+  padding-right: 12px;
+}
+
+body.sidebar-collapsed .sidebar-nav a::before {
+  width: 100%;
 }
 
 /* Dashboard Grid */
@@ -451,9 +583,30 @@ table tr:hover {
   }
 
   .sidebar {
-    width: 100%;
-    height: auto;
-    position: relative;
+    position: fixed;
+    left: 0;
+    top: 0;
+    bottom: 0;
+    height: 100vh;
+    width: 280px;
+    transform: translateX(-110%);
+    z-index: 50;
+  }
+
+  body.sidebar-mobile-open .sidebar {
+    transform: translateX(0);
+  }
+
+  .sidebar-backdrop {
+    display: none;
+    position: fixed;
+    inset: 0;
+    background: rgba(17, 24, 39, 0.55);
+    z-index: 40;
+  }
+
+  body.sidebar-mobile-open .sidebar-backdrop {
+    display: block;
   }
 
   .main-wrapper {
@@ -466,8 +619,27 @@ table tr:hover {
     gap: 12px;
   }
 
+  .topbar-left {
+    width: 100%;
+  }
+
+  .page-title {
+    font-size: 22px;
+  }
+
   .page-content {
     padding: 20px;
+  }
+}
+
+@media (max-width: 520px) {
+  .filters-box input,
+  .filters-box select {
+    min-width: 100%;
+  }
+
+  .container {
+    padding: 18px;
   }
 }
 

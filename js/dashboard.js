@@ -10,6 +10,39 @@ if (!loggedInUser || !userRole) {
 
 const today = new Date().toISOString().split("T")[0];
 
+function showDashboardFatal(message) {
+  try {
+    const target =
+      document.getElementById("dashboardCards") ||
+      document.querySelector(".page-content") ||
+      document.body;
+
+    target.innerHTML = `
+      <div class="dashboard-card" style="border-color:#fecaca;">
+        <h3 style="color:#dc2626;">Dashboard Error</h3>
+        <p style="color:#6b7280; margin-top:8px;">
+          ${String(message || "Something went wrong.")}
+        </p>
+      </div>
+    `;
+  } catch (e) {
+    // Last resort: do nothing
+  }
+}
+
+// Surface unexpected runtime issues directly on the page (helps debugging “blank dashboard”)
+window.addEventListener("error", (event) => {
+  const msg = event && event.message ? event.message : "Script error";
+  showDashboardFatal(msg);
+});
+window.addEventListener("unhandledrejection", (event) => {
+  const msg =
+    event && event.reason
+      ? (event.reason.message || String(event.reason))
+      : "Unhandled promise rejection";
+  showDashboardFatal(msg);
+});
+
 // Show loading immediately
 if (dashboardCards) {
   dashboardCards.innerHTML = `
@@ -18,6 +51,8 @@ if (dashboardCards) {
       <p>Please wait</p>
     </div>
   `;
+} else {
+  showDashboardFatal("Dashboard container not found (dashboardCards).");
 }
 
 async function loadDashboardData() {
@@ -54,17 +89,9 @@ async function loadDashboardData() {
   } catch (error) {
     console.error("Dashboard load error:", error);
 
-    dashboardCards.innerHTML = `
-      <div class="dashboard-card">
-        <h3 style="color:#dc2626;">Dashboard Error</h3>
-        <p style="color:#6b7280; margin-top:8px;">
-          Failed to load dashboard data.
-        </p>
-        <p style="margin-top:10px; font-size:13px; color:#dc2626;">
-          ${error.message}
-        </p>
-      </div>
-    `;
+    showDashboardFatal(
+      `Failed to load dashboard data. ${error && error.message ? error.message : ""}`.trim()
+    );
   }
 }
 
