@@ -8,8 +8,9 @@ const followupTableBody = document.getElementById("followupTableBody");
 const timelineBox = document.getElementById("leadTimeline");
 
 const loggedInUser = localStorage.getItem("loggedInUser");
+const userRole = localStorage.getItem("userRole");
 
-if (!loggedInUser) {
+if (!loggedInUser || !userRole) {
   window.location.href = "login.html";
 }
 
@@ -47,10 +48,10 @@ async function loadLeadAndFollowups() {
       return;
     }
 
-    // 🔒 View restriction (agents only their own lead)
+    // 🔒 View restriction
     if (
-      loggedInUser !== "Manager" &&
-      loggedInUser !== "Admin" &&
+      userRole !== "Manager" &&
+      userRole !== "Admin" &&
       lead.lead_owner !== loggedInUser
     ) {
       alert("Permission denied. You can only view your own leads.");
@@ -59,6 +60,11 @@ async function loadLeadAndFollowups() {
     }
 
     renderLeadDetail();
+
+    // 🔒 Lock follow-up form if lead closed
+    if (lead.lead_status !== "Open") {
+      followupForm.style.display = "none";
+    }
 
     // Load followups
     const followRes = await fetch(API_URL + "?action=followups");
@@ -176,6 +182,12 @@ followupForm.addEventListener("submit", async function (e) {
 
   if (!lead) return;
 
+  // 🔒 Prevent follow-up on closed lead
+  if (lead.lead_status !== "Open") {
+    alert("This lead is closed. No more follow-ups can be added.");
+    return;
+  }
+
   const followup_date = document.getElementById("followup_date").value;
   const followup_type = document.getElementById("followup_type").value;
   const followup_status = document.getElementById("followup_status").value;
@@ -194,6 +206,7 @@ followupForm.addEventListener("submit", async function (e) {
     remarks,
     next_followup_date,
     created_by: loggedInUser,
+    created_role: userRole,
     created_timestamp: new Date().toLocaleString()
   };
 
