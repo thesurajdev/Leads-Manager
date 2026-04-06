@@ -1,0 +1,70 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Reports - CRM</title>
+  <link rel="stylesheet" href="css/style.css" />
+</head>
+<body>
+  <div class="container">
+    <h1>Pivot Reports</h1>
+
+    <div class="nav-links">
+      <a href="index.html">Home</a>
+      <a href="dashboard.html">Dashboard</a>
+      <a href="leads.html">View Leads</a>
+      <a href="followups.html">Follow-ups</a>
+    </div>
+
+    <div id="reportAccessMessage" style="margin-top:20px;"></div>
+
+    <div id="reportBuilder" style="display:none; margin-top: 30px;">
+      <div class="filters-box">
+        <select id="rowField">
+          <option value="lead_owner">Lead Owner</option>
+          <option value="lead_source">Lead Source</option>
+          <option value="product_category">Product Category</option>
+          <option value="status">Status</option>
+          <option value="lead_status">Lead Status</option>
+        </select>
+
+        <select id="columnField">
+          <option value="">No Column</option>
+          <option value="status">Status</option>
+          <option value="lead_source">Lead Source</option>
+          <option value="product_category">Product Category</option>
+          <option value="lead_owner">Lead Owner</option>
+        </select>
+
+        <select id="valueField">
+          <option value="count">Count of Leads</option>
+          <option value="sum_order_value">Sum of Order Value</option>
+        </select>
+
+        <select id="filterField">
+          <option value="">No Filter</option>
+          <option value="lead_owner">Lead Owner</option>
+          <option value="lead_source">Lead Source</option>
+          <option value="product_category">Product Category</option>
+          <option value="status">Status</option>
+          <option value="lead_status">Lead Status</option>
+        </select>
+
+        <input type="text" id="filterValue" placeholder="Filter value (optional)" />
+
+        <button id="generateReportBtn">Generate Report</button>
+      </div>
+
+      <div style="margin-top:20px;">
+        <button onclick="exportReportCSV()" style="background:#10b981;">Export Report CSV</button>
+      </div>
+
+      <div id="reportOutput" style="margin-top:30px;"></div>
+    </div>
+  </div>
+
+  <script src="js/config.js"></script>
+  <script src="js/reports.js"></script>
+</body>
+</html>
