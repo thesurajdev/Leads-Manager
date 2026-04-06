@@ -16,29 +16,26 @@
       <a href="add-lead.html">Add New Lead</a>
       <a href="followups.html">Follow-ups</a>
       <a href="reports.html">Reports</a>
+      <a href="#" onclick="logout()">Logout</a>
     </div>
 
     <div class="filters-box" style="margin: 20px 0;">
       <input type="text" id="searchInput" placeholder="Search by Name / Phone / Email / Lead ID" />
-    
+
       <select id="statusFilter">
         <option value="">All Status</option>
       </select>
-    
+
       <select id="sourceFilter">
         <option value="">All Sources</option>
       </select>
-    
+
       <select id="productFilter">
         <option value="">All Products</option>
       </select>
-    
+
       <button onclick="resetFilters()" style="background:#ef4444;">Reset Filters</button>
       <button onclick="exportLeadsCSV()" style="background:#10b981;">Export CSV</button>
-    </div>
-
-    <div style="margin-top: 20px;">
-      <input type="text" id="searchInput" placeholder="Search by customer, phone, source, owner..." />
     </div>
 
     <div class="table-wrapper">
@@ -46,15 +43,15 @@
         <thead>
           <tr>
             <th>Lead ID</th>
-            <th>Date</th>
             <th>Customer</th>
             <th>Contact</th>
+            <th>Email</th>
             <th>Lead Source</th>
             <th>Product</th>
-            <th>Lead Owner</th>
             <th>Status</th>
-            <th>Lead Status</th>
-            <th>Order Value</th>
+            <th>Lead Owner</th>
+            <th>Next Follow-up</th>
+            <th>Priority</th>
             <th>Actions</th>
           </tr>
         </thead>
@@ -65,5 +62,13 @@
 
   <script src="js/config.js"></script>
   <script src="js/leads.js"></script>
+
+  <script>
+    function logout() {
+      localStorage.removeItem("loggedInUser");
+      localStorage.removeItem("userRole");
+      window.location.href = "login.html";
+    }
+  </script>
 </body>
 </html>
