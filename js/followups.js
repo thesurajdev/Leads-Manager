@@ -6,8 +6,9 @@ const overdueFollowupsBody = document.getElementById("overdueFollowups");
 const upcomingFollowupsBody = document.getElementById("upcomingFollowups");
 
 const loggedInUser = localStorage.getItem("loggedInUser");
+const userRole = localStorage.getItem("userRole");
 
-if (!loggedInUser) {
+if (!loggedInUser || !userRole) {
   window.location.href = "login.html";
 }
 
@@ -36,7 +37,7 @@ async function loadData() {
       next_followup_date: String(lead["Next Follow-up Date"] || "")
     }));
 
-    // Load Followups
+    // Load Followups (optional for future use)
     const followRes = await fetch(API_URL + "?action=followups");
     const followRaw = await followRes.json();
 
@@ -86,8 +87,8 @@ function renderFollowups() {
 
   let visibleLeads = [...leads];
 
-  // 🔥 Agent sees only own leads
-  if (loggedInUser !== "Manager" && loggedInUser !== "Admin") {
+  // 🔒 Role-based filtering
+  if (userRole !== "Manager" && userRole !== "Admin") {
     visibleLeads = visibleLeads.filter((lead) => lead.lead_owner === loggedInUser);
   }
 
@@ -101,7 +102,7 @@ function renderFollowups() {
       todayFollowupsBody.innerHTML += createRow(lead);
     } else if (nextDate < today) {
       overdueFollowupsBody.innerHTML += createRow(lead);
-    } else if (nextDate > today) {
+    } else {
       upcomingFollowupsBody.innerHTML += createRow(lead);
     }
   });
