@@ -2,14 +2,16 @@ let leads = [];
 let filteredLeads = [];
 
 const leadsTableBody = document.getElementById("leadsTableBody");
+
 const loggedInUser = localStorage.getItem("loggedInUser");
+const userRole = localStorage.getItem("userRole");
 
 const searchInput = document.getElementById("searchInput");
 const statusFilter = document.getElementById("statusFilter");
 const sourceFilter = document.getElementById("sourceFilter");
 const productFilter = document.getElementById("productFilter");
 
-if (!loggedInUser) {
+if (!loggedInUser || !userRole) {
   window.location.href = "login.html";
 }
 
@@ -37,8 +39,8 @@ async function loadLeads() {
       next_followup_date: String(lead["Next Follow-up Date"] || "")
     }));
 
-    // 🔒 Role-based lead visibility
-    if (loggedInUser !== "Manager" && loggedInUser !== "Admin") {
+    // 🔒 Role-based visibility
+    if (userRole !== "Manager" && userRole !== "Admin") {
       leads = leads.filter(lead => lead.lead_owner === loggedInUser);
     }
 
@@ -148,7 +150,7 @@ function renderLeads(data) {
           <button onclick="viewLead(${lead.id})">View</button>
           <button onclick="editLead('${lead.lead_id}')" style="margin-top:6px;background:#16a34a;">Edit</button>
           ${
-            loggedInUser === "Manager" || loggedInUser === "Admin"
+            userRole === "Manager" || userRole === "Admin"
               ? `<button onclick="reassignLead('${lead.lead_id}', '${lead.lead_owner}')" style="margin-top:6px;background:#f59e0b;">Reassign</button>`
               : ""
           }
@@ -170,36 +172,28 @@ function editLead(leadId) {
 
 async function reassignLead(leadId, currentOwner) {
   const allowedAgents = [
-    "Anjali",
-    "Pragati",
-    "Payal",
-    "Hira",
-    "Agent 5",
-    "Agent 6",
-    "Agent 7",
-    "Agent 8",
-    "Agent 9",
-    "Agent 10"
+    "Anjali","Pragati","Payal","Hira",
+    "Agent 5","Agent 6","Agent 7","Agent 8","Agent 9","Agent 10"
   ];
 
   const newOwner = prompt(
-    `Current Owner: ${currentOwner}\n\nEnter new agent name exactly as below:\n\n${allowedAgents.join(", ")}`
+    `Current Owner: ${currentOwner}\n\nEnter new agent name:\n\n${allowedAgents.join(", ")}`
   );
 
   if (!newOwner) return;
 
   if (!allowedAgents.includes(newOwner.trim())) {
-    alert("Invalid agent name. Please enter a valid agent exactly.");
+    alert("Invalid agent name.");
     return;
   }
 
   if (newOwner.trim() === currentOwner.trim()) {
-    alert("This lead is already assigned to that agent.");
+    alert("Already assigned.");
     return;
   }
 
   const confirmMove = confirm(
-    `Are you sure you want to reassign Lead ${leadId} from ${currentOwner} to ${newOwner}?`
+    `Reassign Lead ${leadId} to ${newOwner}?`
   );
 
   if (!confirmMove) return;
@@ -209,7 +203,8 @@ async function reassignLead(leadId, currentOwner) {
       type: "reassignLead",
       lead_id: leadId,
       new_owner: newOwner.trim(),
-      requested_by: loggedInUser
+      requested_by: loggedInUser,
+      requested_role: userRole
     };
 
     const res = await fetch(API_URL, {
@@ -220,72 +215,47 @@ async function reassignLead(leadId, currentOwner) {
     const result = await res.json();
 
     if (result.success) {
-      alert(`Lead reassigned successfully to ${newOwner}!`);
+      alert("Reassigned successfully!");
       loadLeads();
     } else if (result.permission_denied) {
-      alert("Permission denied. Only Manager/Admin can reassign leads.");
+      alert("Permission denied.");
     } else {
-      alert("Failed to reassign lead.\n\n" + JSON.stringify(result));
+      alert("Failed.\n" + JSON.stringify(result));
     }
 
   } catch (error) {
-    console.error("Reassign error:", error);
-    alert("Error reassigning lead.");
+    console.error(error);
+    alert("Error reassigning.");
   }
 }
 
 function exportLeadsCSV() {
-  if (!filteredLeads || filteredLeads.length === 0) {
-    alert("No leads available to export.");
+  if (!filteredLeads.length) {
+    alert("No data to export.");
     return;
   }
 
   const headers = [
-    "Lead ID",
-    "Created Date",
-    "Lead Owner",
-    "Customer Name",
-    "Contact No.",
-    "Email ID",
-    "Lead Source",
-    "Product Category",
-    "Status",
-    "Remarks",
-    "Lead Status",
-    "Order Value",
-    "Next Follow-up Date"
+    "Lead ID","Created Date","Lead Owner","Customer Name","Contact No.",
+    "Email","Lead Source","Product Category","Status","Remarks",
+    "Lead Status","Order Value","Next Follow-up Date"
   ];
 
-  const rows = filteredLeads.map(lead => [
-    lead.lead_id,
-    lead.date,
-    lead.lead_owner,
-    lead.customer_name,
-    lead.contact_no,
-    lead.email,
-    lead.lead_source,
-    lead.product_category,
-    lead.status,
-    lead.remarks,
-    lead.lead_status,
-    lead.order_value,
-    lead.next_followup_date
+  const rows = filteredLeads.map(l => [
+    l.lead_id,l.date,l.lead_owner,l.customer_name,l.contact_no,
+    l.email,l.lead_source,l.product_category,l.status,l.remarks,
+    l.lead_status,l.order_value,l.next_followup_date
   ]);
 
-  const csvContent = [
-    headers.join(","),
-    ...rows.map(row =>
-      row.map(value => `"${String(value || "").replace(/"/g, '""')}"`).join(",")
-    )
-  ].join("\n");
+  const csv = [headers.join(","), ...rows.map(r =>
+    r.map(v => `"${String(v||"").replace(/"/g,'""')}"`).join(",")
+  )].join("\n");
 
-  const blob = new Blob([csvContent], { type: "text/csv;charset=utf-8;" });
+  const blob = new Blob([csv], { type: "text/csv" });
   const url = URL.createObjectURL(blob);
 
-  const link = document.createElement("a");
-  link.setAttribute("href", url);
-  link.setAttribute("download", `leads_export_${new Date().toISOString().split("T")[0]}.csv`);
-  document.body.appendChild(link);
-  link.click();
-  document.body.removeChild(link);
+  const a = document.createElement("a");
+  a.href = url;
+  a.download = `leads_${new Date().toISOString().split("T")[0]}.csv`;
+  a.click();
 }
