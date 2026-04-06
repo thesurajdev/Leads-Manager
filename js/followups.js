@@ -4,6 +4,7 @@ let followups = [];
 const todayFollowupsBody = document.getElementById("todayFollowups");
 const overdueFollowupsBody = document.getElementById("overdueFollowups");
 const upcomingFollowupsBody = document.getElementById("upcomingFollowups");
+const followupInsights = document.getElementById("followupInsights");
 
 const loggedInUser = localStorage.getItem("loggedInUser");
 const userRole = localStorage.getItem("userRole");
@@ -16,7 +17,6 @@ const today = new Date().toISOString().split("T")[0];
 
 async function loadData() {
   try {
-    // Load Leads
     const leadsRes = await fetch(API_URL);
     const leadsRaw = await leadsRes.json();
 
@@ -37,22 +37,21 @@ async function loadData() {
       next_followup_date: String(lead["Next Follow-up Date"] || "")
     }));
 
-    // Load Followups (optional for future use)
     const followRes = await fetch(API_URL + "?action=followups");
     const followRaw = await followRes.json();
 
-    followups = followRaw.map((f) => ({
-      followup_id: String(f["Followup ID"] || ""),
-      lead_id: String(f["Lead ID"] || ""),
-      customer_name: String(f["Customer Name"] || ""),
-      contact_no: String(f["Contact No."] || ""),
-      followup_date: String(f["Follow-up Date"] || ""),
-      followup_type: String(f["Follow-up Type"] || ""),
-      followup_status: String(f["Follow-up Status"] || ""),
-      remarks: String(f["Remarks"] || ""),
-      next_followup_date: String(f["Next Follow-up Date"] || ""),
-      created_by: String(f["Created By"] || ""),
-      created_timestamp: String(f["Created Timestamp"] || "")
+    followups = followRaw.map((followup) => ({
+      followup_id: String(followup["Followup ID"] || ""),
+      lead_id: String(followup["Lead ID"] || ""),
+      customer_name: String(followup["Customer Name"] || ""),
+      contact_no: String(followup["Contact No."] || ""),
+      followup_date: String(followup["Follow-up Date"] || ""),
+      followup_type: String(followup["Follow-up Type"] || ""),
+      followup_status: String(followup["Follow-up Status"] || ""),
+      remarks: String(followup["Remarks"] || ""),
+      next_followup_date: String(followup["Next Follow-up Date"] || ""),
+      created_by: String(followup["Created By"] || ""),
+      created_timestamp: String(followup["Created Timestamp"] || "")
     }));
 
     renderFollowups();
@@ -60,9 +59,9 @@ async function loadData() {
   } catch (error) {
     console.error("Error loading follow-up data:", error);
 
-    todayFollowupsBody.innerHTML = `<tr><td colspan="7" style="text-align:center;">Failed to load follow-ups.</td></tr>`;
-    overdueFollowupsBody.innerHTML = `<tr><td colspan="7" style="text-align:center;">Failed to load follow-ups.</td></tr>`;
-    upcomingFollowupsBody.innerHTML = `<tr><td colspan="7" style="text-align:center;">Failed to load follow-ups.</td></tr>`;
+    todayFollowupsBody.innerHTML = `<tr><td colspan="7" class="empty-state">Failed to load follow-ups.</td></tr>`;
+    overdueFollowupsBody.innerHTML = `<tr><td colspan="7" class="empty-state">Failed to load follow-ups.</td></tr>`;
+    upcomingFollowupsBody.innerHTML = `<tr><td colspan="7" class="empty-state">Failed to load follow-ups.</td></tr>`;
   }
 }
 
@@ -80,6 +79,28 @@ function createRow(lead) {
   `;
 }
 
+function renderFollowupInsights(todayCount, overdueCount, upcomingCount) {
+  if (!followupInsights) return;
+
+  followupInsights.innerHTML = `
+    <div class="insight-card">
+      <strong>Due today</strong>
+      <span class="insight-value">${todayCount}</span>
+      <p>Follow-ups expected to be completed today.</p>
+    </div>
+    <div class="insight-card">
+      <strong>Overdue</strong>
+      <span class="insight-value">${overdueCount}</span>
+      <p>Past-due follow-ups that should be prioritized.</p>
+    </div>
+    <div class="insight-card">
+      <strong>Upcoming</strong>
+      <span class="insight-value">${upcomingCount}</span>
+      <p>Future follow-ups already scheduled.</p>
+    </div>
+  `;
+}
+
 function renderFollowups() {
   const todayRows = [];
   const overdueRows = [];
@@ -87,7 +108,6 @@ function renderFollowups() {
 
   let visibleLeads = [...leads];
 
-  // 🔒 Role-based filtering
   if (userRole !== "Manager" && userRole !== "Admin") {
     visibleLeads = visibleLeads.filter((lead) => lead.lead_owner === loggedInUser);
   }
@@ -107,20 +127,22 @@ function renderFollowups() {
     }
   });
 
+  renderFollowupInsights(todayRows.length, overdueRows.length, upcomingRows.length);
+
   todayFollowupsBody.innerHTML =
     todayRows.length > 0
       ? todayRows.join("")
-      : `<tr><td colspan="7" style="text-align:center;">No follow-ups for today.</td></tr>`;
+      : `<tr><td colspan="7" class="empty-state">No follow-ups for today.</td></tr>`;
 
   overdueFollowupsBody.innerHTML =
     overdueRows.length > 0
       ? overdueRows.join("")
-      : `<tr><td colspan="7" style="text-align:center;">No overdue follow-ups.</td></tr>`;
+      : `<tr><td colspan="7" class="empty-state">No overdue follow-ups.</td></tr>`;
 
   upcomingFollowupsBody.innerHTML =
     upcomingRows.length > 0
       ? upcomingRows.join("")
-      : `<tr><td colspan="7" style="text-align:center;">No upcoming follow-ups.</td></tr>`;
+      : `<tr><td colspan="7" class="empty-state">No upcoming follow-ups.</td></tr>`;
 }
 
 function openLead(id) {

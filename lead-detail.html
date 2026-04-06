@@ -3,16 +3,15 @@
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>Lead Detail - CRM</title>
+  <title>Lead Detail - Leads Manager</title>
   <link rel="stylesheet" href="css/style.css" />
 </head>
-<body>
+<body class="app-page">
   <div class="app-layout">
-    <!-- Sidebar -->
     <aside class="sidebar">
       <div class="sidebar-logo">
-        <h2>Sales CRM</h2>
-        <span class="sidebar-mini">CRM</span>
+        <h2>Leads Manager</h2>
+        <span class="sidebar-mini">LM</span>
       </div>
 
       <nav class="sidebar-nav">
@@ -31,7 +30,6 @@
 
     <div id="sidebarBackdrop" class="sidebar-backdrop" aria-hidden="true"></div>
 
-    <!-- Main Area -->
     <div class="main-wrapper">
       <header class="topbar">
         <div class="topbar-left">
@@ -49,68 +47,121 @@
       </header>
 
       <main class="page-content">
-        <div class="container">
-          <div id="leadDetailBox" style="margin-top: 30px;"></div>
+        <div class="container page-stack">
+          <section class="hero-panel">
+            <span class="eyebrow">Lead Workspace</span>
+            <div class="section-header" style="margin-top: 18px; margin-bottom: 0;">
+              <div>
+                <h2 class="section-heading">Lead detail and activity</h2>
+                <p class="section-note">Review context, update follow-ups, and track the full relationship timeline.</p>
+              </div>
+            </div>
+          </section>
 
-          <hr style="margin: 30px 0;" />
+          <div id="leadSummaryStrip" class="insight-grid"></div>
 
-          <h2>Add Follow-up</h2>
-          <form id="followupForm">
-            <label>Follow-up Date</label>
-            <input type="date" id="followup_date" required />
+          <section class="panel">
+            <div class="section-header">
+              <div>
+                <h2 class="section-heading">Lead profile</h2>
+                <p class="section-note">Core customer, owner, status, and next-step information.</p>
+              </div>
+            </div>
+            <div id="leadDetailBox"></div>
+          </section>
 
-            <label>Follow-up Type</label>
-            <select id="followup_type">
-              <option>Call</option>
-              <option>WhatsApp</option>
-              <option>Email</option>
-              <option>Meeting</option>
-              <option>Demo</option>
-              <option>Visit</option>
-            </select>
+          <div class="divider"></div>
 
-            <label>Follow-up Status</label>
-            <select id="followup_status">
-              <option>No Response</option>
-              <option>Interested</option>
-              <option>Call Back Later</option>
-              <option>Quotation Sent</option>
-              <option>Negotiation</option>
-              <option>Won</option>
-              <option>Lost</option>
-            </select>
+          <section class="panel">
+            <div class="section-header">
+              <div>
+                <h2 class="section-heading">Add follow-up</h2>
+                <p class="section-note">Log the latest interaction and set the next expected action.</p>
+              </div>
+            </div>
+            <form id="followupForm" class="form-grid">
+              <div>
+                <label>Follow-up Date</label>
+                <input type="date" id="followup_date" required />
+              </div>
 
-            <label>Remarks</label>
-            <textarea id="followup_remarks" required></textarea>
+              <div>
+                <label>Follow-up Type</label>
+                <select id="followup_type">
+                  <option>Call</option>
+                  <option>WhatsApp</option>
+                  <option>Email</option>
+                  <option>Meeting</option>
+                  <option>Demo</option>
+                  <option>Visit</option>
+                </select>
+              </div>
 
-            <label>Next Follow-up Date</label>
-            <input type="date" id="next_followup_date" />
+              <div>
+                <label>Follow-up Status</label>
+                <select id="followup_status">
+                  <option>No Response</option>
+                  <option>Interested</option>
+                  <option>Call Back Later</option>
+                  <option>Quotation Sent</option>
+                  <option>Negotiation</option>
+                  <option>Won</option>
+                  <option>Lost</option>
+                </select>
+              </div>
 
-            <button type="submit">Add Follow-up</button>
-          </form>
+              <div>
+                <label>Next Follow-up Date</label>
+                <input type="date" id="next_followup_date" />
+              </div>
 
-          <hr style="margin: 30px 0;" />
+              <div class="field-span-2">
+                <label>Remarks</label>
+                <textarea id="followup_remarks" required></textarea>
+              </div>
 
-          <h2>Follow-up History</h2>
-          <div class="table-wrapper">
-            <table>
-              <thead>
-                <tr>
-                  <th>Date</th>
-                  <th>Type</th>
-                  <th>Status</th>
-                  <th>Remarks</th>
-                  <th>Next Follow-up</th>
-                </tr>
-              </thead>
-              <tbody id="followupTableBody"></tbody>
-            </table>
-          </div>
+              <div class="field-span-2 action-row">
+                <button type="submit">Add Follow-up</button>
+              </div>
+            </form>
+          </section>
 
-          <h2 style="margin-top: 40px;">Lead Activity Timeline</h2>
-          <div id="leadTimeline" class="timeline-box">
-            <p>Loading timeline...</p>
-          </div>
+          <div class="divider"></div>
+
+          <section class="panel">
+            <div class="section-header">
+              <div>
+                <h2 class="section-heading">Follow-up history</h2>
+                <p class="section-note">Chronological log of prior engagement on this lead.</p>
+              </div>
+            </div>
+            <div class="table-wrapper">
+              <table>
+                <thead>
+                  <tr>
+                    <th>Date</th>
+                    <th>Type</th>
+                    <th>Status</th>
+                    <th>Remarks</th>
+                    <th>Next Follow-up</th>
+                  </tr>
+                </thead>
+                <tbody id="followupTableBody"></tbody>
+              </table>
+            </div>
+          </section>
+
+          <section class="panel">
+            <div class="section-header">
+              <div>
+                <h2 class="section-heading">Lead activity timeline</h2>
+                <p class="section-note">Everything that happened on the lead, from creation to the latest update.</p>
+              </div>
+            </div>
+            <div id="leadTimeline" class="timeline-box">
+              <p>Loading timeline...</p>
+            </div>
+          </section>
         </div>
       </main>
     </div>

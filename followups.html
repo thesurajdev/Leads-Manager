@@ -3,16 +3,15 @@
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>Follow-ups - CRM</title>
+  <title>Follow-ups - Leads Manager</title>
   <link rel="stylesheet" href="css/style.css" />
 </head>
-<body>
+<body class="app-page">
   <div class="app-layout">
-    <!-- Sidebar -->
     <aside class="sidebar">
       <div class="sidebar-logo">
-        <h2>Sales CRM</h2>
-        <span class="sidebar-mini">CRM</span>
+        <h2>Leads Manager</h2>
+        <span class="sidebar-mini">LM</span>
       </div>
 
       <nav class="sidebar-nav">
@@ -31,7 +30,6 @@
 
     <div id="sidebarBackdrop" class="sidebar-backdrop" aria-hidden="true"></div>
 
-    <!-- Main Area -->
     <div class="main-wrapper">
       <header class="topbar">
         <div class="topbar-left">
@@ -49,60 +47,93 @@
       </header>
 
       <main class="page-content">
-        <div class="container">
-          <h2 style="margin-top:30px;">Today's Follow-ups</h2>
-          <div class="table-wrapper">
-            <table>
-              <thead>
-                <tr>
-                  <th>Lead ID</th>
-                  <th>Customer</th>
-                  <th>Contact</th>
-                  <th>Owner</th>
-                  <th>Next Follow-up</th>
-                  <th>Status</th>
-                  <th>Action</th>
-                </tr>
-              </thead>
-              <tbody id="todayFollowups"></tbody>
-            </table>
-          </div>
+        <div class="container page-stack">
+          <section class="hero-panel">
+            <span class="eyebrow">Follow-up Queue</span>
+            <div class="section-header" style="margin-top: 18px; margin-bottom: 0;">
+              <div>
+                <h2 class="section-heading">Stay ahead of every conversation</h2>
+                <p class="section-note">Use the queue to prioritize overdue work, handle today&#39;s commitments, and plan what comes next.</p>
+              </div>
+            </div>
+          </section>
 
-          <h2 style="margin-top:40px;">Overdue Follow-ups</h2>
-          <div class="table-wrapper">
-            <table>
-              <thead>
-                <tr>
-                  <th>Lead ID</th>
-                  <th>Customer</th>
-                  <th>Contact</th>
-                  <th>Owner</th>
-                  <th>Next Follow-up</th>
-                  <th>Status</th>
-                  <th>Action</th>
-                </tr>
-              </thead>
-              <tbody id="overdueFollowups"></tbody>
-            </table>
-          </div>
+          <div id="followupInsights" class="insight-grid"></div>
 
-          <h2 style="margin-top:40px;">Upcoming Follow-ups</h2>
-          <div class="table-wrapper">
-            <table>
-              <thead>
-                <tr>
-                  <th>Lead ID</th>
-                  <th>Customer</th>
-                  <th>Contact</th>
-                  <th>Owner</th>
-                  <th>Next Follow-up</th>
-                  <th>Status</th>
-                  <th>Action</th>
-                </tr>
-              </thead>
-              <tbody id="upcomingFollowups"></tbody>
-            </table>
-          </div>
+          <section class="panel">
+            <div class="section-header">
+              <div>
+                <h2 class="section-heading">Today&#39;s follow-ups</h2>
+                <p class="section-note">Work due today, grouped for fast action.</p>
+              </div>
+            </div>
+            <div class="table-wrapper">
+              <table>
+                <thead>
+                  <tr>
+                    <th>Lead ID</th>
+                    <th>Customer</th>
+                    <th>Contact</th>
+                    <th>Owner</th>
+                    <th>Next Follow-up</th>
+                    <th>Status</th>
+                    <th>Action</th>
+                  </tr>
+                </thead>
+                <tbody id="todayFollowups"></tbody>
+              </table>
+            </div>
+          </section>
+
+          <section class="panel">
+            <div class="section-header">
+              <div>
+                <h2 class="section-heading">Overdue follow-ups</h2>
+                <p class="section-note">Items that need attention before they turn into missed opportunities.</p>
+              </div>
+            </div>
+            <div class="table-wrapper">
+              <table>
+                <thead>
+                  <tr>
+                    <th>Lead ID</th>
+                    <th>Customer</th>
+                    <th>Contact</th>
+                    <th>Owner</th>
+                    <th>Next Follow-up</th>
+                    <th>Status</th>
+                    <th>Action</th>
+                  </tr>
+                </thead>
+                <tbody id="overdueFollowups"></tbody>
+              </table>
+            </div>
+          </section>
+
+          <section class="panel">
+            <div class="section-header">
+              <div>
+                <h2 class="section-heading">Upcoming follow-ups</h2>
+                <p class="section-note">Plan ahead without losing visibility on future outreach.</p>
+              </div>
+            </div>
+            <div class="table-wrapper">
+              <table>
+                <thead>
+                  <tr>
+                    <th>Lead ID</th>
+                    <th>Customer</th>
+                    <th>Contact</th>
+                    <th>Owner</th>
+                    <th>Next Follow-up</th>
+                    <th>Status</th>
+                    <th>Action</th>
+                  </tr>
+                </thead>
+                <tbody id="upcomingFollowups"></tbody>
+              </table>
+            </div>
+          </section>
         </div>
       </main>
     </div>

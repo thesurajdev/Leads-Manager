@@ -3,16 +3,15 @@
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>Sales CRM</title>
+  <title>Leads Manager</title>
   <link rel="stylesheet" href="css/style.css" />
 </head>
-<body>
+<body class="app-page">
   <div class="app-layout">
-    <!-- Sidebar -->
     <aside class="sidebar">
       <div class="sidebar-logo">
-        <h2>Sales CRM</h2>
-        <span class="sidebar-mini">CRM</span>
+        <h2>Leads Manager</h2>
+        <span class="sidebar-mini">LM</span>
       </div>
 
       <nav class="sidebar-nav">
@@ -31,7 +30,6 @@
 
     <div id="sidebarBackdrop" class="sidebar-backdrop" aria-hidden="true"></div>
 
-    <!-- Main Area -->
     <div class="main-wrapper">
       <header class="topbar">
         <div class="topbar-left">
@@ -49,15 +47,102 @@
       </header>
 
       <main class="page-content">
-        <div class="container">
-          <h2>Quick actions</h2>
-          <div class="nav-links">
-            <a href="dashboard.html">Open Dashboard</a>
-            <a href="leads.html">View Leads</a>
-            <a href="add-lead.html">Add New Lead</a>
-            <a href="followups.html">Follow-ups</a>
-            <a href="reports.html">Reports</a>
-          </div>
+        <div class="container page-stack">
+          <section class="hero-panel hero-grid">
+            <div class="hero-copy">
+              <span class="eyebrow">Modern CRM Workspace</span>
+              <h1>Manage leads with the clarity of a real product.</h1>
+              <p>
+                Leads Manager brings your pipeline, follow-ups, assignments, and reporting into one focused workspace built for daily operations.
+              </p>
+              <div class="hero-actions">
+                <a href="dashboard.html">Open Dashboard</a>
+                <a href="add-lead.html" class="btn-secondary">Create Lead</a>
+              </div>
+            </div>
+
+            <div class="hero-side">
+              <div class="hero-stats">
+                <div class="stat-pill">
+                  Pipeline View
+                  <strong>Live</strong>
+                </div>
+                <div class="stat-pill">
+                  Follow-up Control
+                  <strong>Daily</strong>
+                </div>
+                <div class="stat-pill">
+                  Team Visibility
+                  <strong>Role-Based</strong>
+                </div>
+                <div class="stat-pill">
+                  Reporting
+                  <strong>Export Ready</strong>
+                </div>
+              </div>
+            </div>
+          </section>
+
+          <section class="panel">
+            <div class="section-header">
+              <div>
+                <h2 class="section-heading">Quick actions</h2>
+                <p class="section-note">Jump straight into the workflows your team uses every day.</p>
+              </div>
+            </div>
+
+            <div class="shortcut-grid">
+              <a class="shortcut-card" href="dashboard.html">
+                <span>▦</span>
+                <strong>Dashboard</strong>
+                <p>Track volume, follow-ups, wins, and revenue.</p>
+              </a>
+              <a class="shortcut-card" href="leads.html">
+                <span>◎</span>
+                <strong>Lead Desk</strong>
+                <p>Filter, search, export, and act on pipeline items.</p>
+              </a>
+              <a class="shortcut-card" href="add-lead.html">
+                <span>+</span>
+                <strong>Add Lead</strong>
+                <p>Create new opportunities with a clean capture flow.</p>
+              </a>
+              <a class="shortcut-card" href="followups.html">
+                <span>↻</span>
+                <strong>Follow-ups</strong>
+                <p>Stay ahead of overdue, today, and upcoming outreach.</p>
+              </a>
+              <a class="shortcut-card" href="reports.html">
+                <span>≋</span>
+                <strong>Reports</strong>
+                <p>Build pivot-style views and export snapshots fast.</p>
+              </a>
+            </div>
+          </section>
+
+          <section class="panel">
+            <div class="section-header">
+              <div>
+                <h2 class="section-heading">What changed in the new UI</h2>
+                <p class="section-note">A cleaner shell, stronger information hierarchy, and easier daily navigation.</p>
+              </div>
+            </div>
+
+            <div class="insight-grid">
+              <div class="insight-card">
+                <strong>Sharper focus</strong>
+                <p>Important actions and high-signal data now stand out immediately.</p>
+              </div>
+              <div class="insight-card">
+                <strong>Better readability</strong>
+                <p>Forms, tables, and cards now have clearer grouping and breathing room.</p>
+              </div>
+              <div class="insight-card">
+                <strong>More product-like feel</strong>
+                <p>Consistent branding, mobile behavior, and a modern control surface across pages.</p>
+              </div>
+            </div>
+          </section>
         </div>
       </main>
     </div>

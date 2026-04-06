@@ -18,11 +18,10 @@ function showDashboardFatal(message) {
       document.body;
 
     target.innerHTML = `
-      <div class="dashboard-card" style="border-color:#fecaca;">
-        <h3 style="color:#dc2626;">Dashboard Error</h3>
-        <p style="color:#6b7280; margin-top:8px;">
-          ${String(message || "Something went wrong.")}
-        </p>
+      <div class="dashboard-card">
+        <span class="stat-label">Dashboard Error</span>
+        <p>${String(message || "Something went wrong.")}</p>
+        <div class="stat-note">Check your API connection and browser console.</div>
       </div>
     `;
   } catch (e) {
@@ -30,7 +29,6 @@ function showDashboardFatal(message) {
   }
 }
 
-// Surface unexpected runtime issues directly on the page (helps debugging “blank dashboard”)
 window.addEventListener("error", (event) => {
   const msg = event && event.message ? event.message : "Script error";
   showDashboardFatal(msg);
@@ -38,17 +36,17 @@ window.addEventListener("error", (event) => {
 window.addEventListener("unhandledrejection", (event) => {
   const msg =
     event && event.reason
-      ? (event.reason.message || String(event.reason))
+      ? event.reason.message || String(event.reason)
       : "Unhandled promise rejection";
   showDashboardFatal(msg);
 });
 
-// Show loading immediately
 if (dashboardCards) {
   dashboardCards.innerHTML = `
     <div class="dashboard-card">
-      <h3>Loading dashboard...</h3>
+      <span class="stat-label">Loading dashboard</span>
       <p>Please wait</p>
+      <div class="stat-note">We are pulling your latest pipeline metrics.</div>
     </div>
   `;
 } else {
@@ -57,12 +55,8 @@ if (dashboardCards) {
 
 async function loadDashboardData() {
   try {
-    console.log("API_URL:", API_URL);
-
     const leadsRes = await fetch(API_URL);
     const leadsRaw = await leadsRes.json();
-
-    console.log("Dashboard API Response:", leadsRaw);
 
     if (!Array.isArray(leadsRaw)) {
       throw new Error("API did not return an array");
@@ -98,78 +92,87 @@ async function loadDashboardData() {
 function renderDashboard() {
   let visibleLeads = [...leads];
 
-  // Role-based filtering
   if (userRole !== "Manager" && userRole !== "Admin") {
     visibleLeads = visibleLeads.filter((lead) => lead.lead_owner === loggedInUser);
   }
 
   const totalLeads = visibleLeads.length;
-  const openLeads = visibleLeads.filter(l => l.lead_status === "Open").length;
-  const wonLeads = visibleLeads.filter(l => l.status === "Won").length;
-  const lostLeads = visibleLeads.filter(l => l.status === "Lost").length;
+  const openLeads = visibleLeads.filter((lead) => lead.lead_status === "Open").length;
+  const wonLeads = visibleLeads.filter((lead) => lead.status === "Won").length;
+  const lostLeads = visibleLeads.filter((lead) => lead.status === "Lost").length;
 
   const todayFollowups = visibleLeads.filter(
-    l => l.lead_status === "Open" && l.next_followup_date === today
+    (lead) => lead.lead_status === "Open" && lead.next_followup_date === today
   ).length;
 
   const overdueFollowups = visibleLeads.filter(
-    l => l.lead_status === "Open" && l.next_followup_date && l.next_followup_date < today
+    (lead) => lead.lead_status === "Open" && lead.next_followup_date && lead.next_followup_date < today
   ).length;
 
   const upcomingFollowups = visibleLeads.filter(
-    l => l.lead_status === "Open" && l.next_followup_date && l.next_followup_date > today
+    (lead) => lead.lead_status === "Open" && lead.next_followup_date && lead.next_followup_date > today
   ).length;
 
   const totalRevenue = visibleLeads
-    .filter(l => l.status === "Won")
-    .reduce((sum, l) => sum + (l.order_value || 0), 0);
+    .filter((lead) => lead.status === "Won")
+    .reduce((sum, lead) => sum + (lead.order_value || 0), 0);
 
-  const titlePrefix =
-    userRole === "Manager" || userRole === "Admin"
-      ? "Team"
-      : "My";
+  const titlePrefix = userRole === "Manager" || userRole === "Admin" ? "Team" : "My";
 
-  dashboardCards.innerHTML = `
-    <div class="dashboard-card stat-card">
-      <h3>${titlePrefix} Total Leads</h3>
-      <p>${totalLeads}</p>
-    </div>
+  const cards = [
+    {
+      title: `${titlePrefix} Total Leads`,
+      value: totalLeads,
+      note: "All visible records in the active pipeline."
+    },
+    {
+      title: `${titlePrefix} Open Leads`,
+      value: openLeads,
+      note: "Active opportunities still being worked."
+    },
+    {
+      title: `${titlePrefix} Won Leads`,
+      value: wonLeads,
+      note: "Successful conversions closed as won."
+    },
+    {
+      title: `${titlePrefix} Lost Leads`,
+      value: lostLeads,
+      note: "Closed opportunities that did not convert."
+    },
+    {
+      title: `${titlePrefix} Today Follow-ups`,
+      value: todayFollowups,
+      note: "Follow-ups that require attention today."
+    },
+    {
+      title: `${titlePrefix} Overdue Follow-ups`,
+      value: overdueFollowups,
+      note: "Open follow-ups that slipped past schedule."
+    },
+    {
+      title: `${titlePrefix} Upcoming Follow-ups`,
+      value: upcomingFollowups,
+      note: "Future commitments already scheduled."
+    },
+    {
+      title: `${titlePrefix} Revenue`,
+      value: formatCurrency(totalRevenue),
+      note: "Won order value based on visible data."
+    }
+  ];
 
-    <div class="dashboard-card stat-card">
-      <h3>${titlePrefix} Open Leads</h3>
-      <p>${openLeads}</p>
-    </div>
-
-    <div class="dashboard-card stat-card">
-      <h3>${titlePrefix} Won Leads</h3>
-      <p>${wonLeads}</p>
-    </div>
-
-    <div class="dashboard-card stat-card">
-      <h3>${titlePrefix} Lost Leads</h3>
-      <p>${lostLeads}</p>
-    </div>
-
-    <div class="dashboard-card stat-card">
-      <h3>${titlePrefix} Today Follow-ups</h3>
-      <p>${todayFollowups}</p>
-    </div>
-
-    <div class="dashboard-card stat-card">
-      <h3>${titlePrefix} Overdue Follow-ups</h3>
-      <p>${overdueFollowups}</p>
-    </div>
-
-    <div class="dashboard-card stat-card">
-      <h3>${titlePrefix} Upcoming Follow-ups</h3>
-      <p>${upcomingFollowups}</p>
-    </div>
-
-    <div class="dashboard-card stat-card">
-      <h3>${titlePrefix} Revenue</h3>
-      <p>${formatCurrency(totalRevenue)}</p>
-    </div>
-  `;
+  dashboardCards.innerHTML = cards
+    .map(
+      (card) => `
+        <div class="dashboard-card stat-card">
+          <span class="stat-label">${card.title}</span>
+          <p>${card.value}</p>
+          <div class="stat-note">${card.note}</div>
+        </div>
+      `
+    )
+    .join("");
 }
 
 function formatCurrency(amount) {

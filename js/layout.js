@@ -27,17 +27,34 @@ if (window.location.protocol === "file:") {
 const loggedInUser = localStorage.getItem("loggedInUser");
 const userRole = localStorage.getItem("userRole");
 
-// Redirect to login if not logged in
 if (!loggedInUser || !userRole) {
   window.location.href = "login.html";
 }
 
-// Set topbar user info
 const topbarUsername = document.getElementById("topbarUsername");
 const topbarRole = document.getElementById("topbarRole");
+const welcomeUser = document.getElementById("welcomeUser");
 
 if (topbarUsername) topbarUsername.textContent = loggedInUser;
 if (topbarRole) topbarRole.textContent = userRole;
+if (welcomeUser && loggedInUser) {
+  welcomeUser.textContent = `Welcome back, ${loggedInUser}. Your pipeline is ready.`;
+}
+
+try {
+  const sidebarFooter = document.querySelector(".sidebar-footer");
+  if (sidebarFooter && !document.querySelector(".shell-credit")) {
+    const credit = document.createElement("div");
+    credit.className = "shell-credit";
+    credit.innerHTML = `
+      <strong>Created by Surajdev</strong>
+      <p><a href="https://www.surajdev.com" target="_blank" rel="noopener noreferrer">www.surajdev.com</a></p>
+    `;
+    sidebarFooter.appendChild(credit);
+  }
+} catch (e) {
+  // ignore
+}
 
 function showGlobalAppError(message) {
   try {
@@ -73,7 +90,6 @@ function showGlobalAppError(message) {
   }
 }
 
-// Global error surfaces (helps with “page shows nothing”)
 window.addEventListener("error", (event) => {
   const msg = event && event.message ? event.message : "Script error";
   showGlobalAppError(msg);
@@ -81,12 +97,11 @@ window.addEventListener("error", (event) => {
 window.addEventListener("unhandledrejection", (event) => {
   const msg =
     event && event.reason
-      ? (event.reason.message || String(event.reason))
+      ? event.reason.message || String(event.reason)
       : "Unhandled promise rejection";
   showGlobalAppError(msg);
 });
 
-// Sidebar state (desktop collapsed, mobile open)
 const SIDEBAR_COLLAPSED_KEY = "sidebarCollapsed";
 
 function setSidebarCollapsed(collapsed) {
@@ -110,16 +125,13 @@ function setMobileSidebarOpen(open) {
   document.body.classList.toggle("sidebar-mobile-open", open);
 }
 
-// Initialize persisted collapsed state (desktop only)
 if (window.innerWidth >= 901) setSidebarCollapsed(getSidebarCollapsed());
 
-// Hide reports for Agent
 const reportsLink = document.getElementById("reportsLink");
 if (reportsLink && userRole === "Agent") {
   reportsLink.style.display = "none";
 }
 
-// Active nav link
 try {
   const currentPage = (window.location.pathname.split("/").pop() || "").toLowerCase();
   const navLinks = document.querySelectorAll(".sidebar-nav a[href]");
@@ -132,7 +144,6 @@ try {
   // ignore
 }
 
-// Logout
 const logoutBtn = document.getElementById("logoutBtn");
 if (logoutBtn) {
   logoutBtn.addEventListener("click", () => {
@@ -142,7 +153,6 @@ if (logoutBtn) {
   });
 }
 
-// Sidebar toggle (hamburger)
 const sidebarToggle = document.getElementById("sidebarToggle");
 if (sidebarToggle) {
   sidebarToggle.addEventListener("click", () => {
@@ -157,28 +167,23 @@ if (sidebarToggle) {
   });
 }
 
-// Keep desktop collapsed state sane after resize
 window.addEventListener("resize", () => {
   if (window.innerWidth >= 901) {
     setMobileSidebarOpen(false);
     setSidebarCollapsed(getSidebarCollapsed());
   } else {
-    // On mobile, don't force collapsed mode (drawer behavior instead)
     document.body.classList.remove("sidebar-collapsed");
   }
 });
 
-// Mobile backdrop click
 const sidebarBackdrop = document.getElementById("sidebarBackdrop");
 if (sidebarBackdrop) {
   sidebarBackdrop.addEventListener("click", () => setMobileSidebarOpen(false));
 }
 
-// Close mobile drawer on navigation
 document.querySelectorAll(".sidebar-nav a[href]").forEach((a) => {
   a.addEventListener("click", () => {
     if (window.innerWidth <= 900) setMobileSidebarOpen(false);
   });
 });
-
 })();

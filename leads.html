@@ -3,16 +3,15 @@
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>Leads - Sales CRM</title>
+  <title>Leads - Leads Manager</title>
   <link rel="stylesheet" href="css/style.css" />
 </head>
-<body>
+<body class="app-page">
   <div class="app-layout">
-    <!-- Sidebar -->
     <aside class="sidebar">
       <div class="sidebar-logo">
-        <h2>Sales CRM</h2>
-        <span class="sidebar-mini">CRM</span>
+        <h2>Leads Manager</h2>
+        <span class="sidebar-mini">LM</span>
       </div>
 
       <nav class="sidebar-nav">
@@ -31,7 +30,6 @@
 
     <div id="sidebarBackdrop" class="sidebar-backdrop" aria-hidden="true"></div>
 
-    <!-- Main Area -->
     <div class="main-wrapper">
       <header class="topbar">
         <div class="topbar-left">
@@ -49,25 +47,48 @@
       </header>
 
       <main class="page-content">
-        <div class="container">
-          <div class="filters-box" style="margin: 20px 0;">
-            <input type="text" id="searchInput" placeholder="Search by Name / Phone / Email / Lead ID" />
+        <div class="container page-stack">
+          <section class="hero-panel">
+            <span class="eyebrow">Pipeline Control</span>
+            <div class="section-header" style="margin-top: 18px; margin-bottom: 0;">
+              <div>
+                <h2 class="section-heading">Lead desk</h2>
+                <p class="section-note">Search, segment, and move quickly through the active pipeline.</p>
+              </div>
+            </div>
+          </section>
 
-            <select id="statusFilter">
-              <option value="">All Status</option>
-            </select>
+          <div id="leadInsights" class="insight-grid"></div>
 
-            <select id="sourceFilter">
-              <option value="">All Sources</option>
-            </select>
+          <section class="panel">
+            <div class="section-header">
+              <div>
+                <h2 class="section-heading">Filters and actions</h2>
+                <p class="section-note">Refine the list, reset the view, or export the current dataset.</p>
+              </div>
+            </div>
 
-            <select id="productFilter">
-              <option value="">All Products</option>
-            </select>
+            <div class="filters-box">
+              <input type="text" id="searchInput" placeholder="Search by Name / Phone / Email / Lead ID" />
 
-            <button onclick="resetFilters()" style="background:#ef4444;">Reset Filters</button>
-            <button onclick="exportLeadsCSV()" style="background:#10b981;">Export CSV</button>
-          </div>
+              <select id="statusFilter">
+                <option value="">All Status</option>
+              </select>
+
+              <select id="sourceFilter">
+                <option value="">All Sources</option>
+              </select>
+
+              <select id="productFilter">
+                <option value="">All Products</option>
+              </select>
+
+              <div class="action-row">
+                <button type="button" class="btn-danger" onclick="resetFilters()">Reset Filters</button>
+                <button type="button" class="btn-success" onclick="exportLeadsCSV()">Export CSV</button>
+              </div>
+            </div>
+          </section>
 
           <div class="table-wrapper">
             <table>

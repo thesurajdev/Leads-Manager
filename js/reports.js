@@ -23,9 +23,10 @@ if (!loggedInUser || !userRole) {
 
 if (userRole !== "Manager" && userRole !== "Admin") {
   reportAccessMessage.innerHTML = `
-    <p style="color:red; font-weight:bold;">
-      Access denied. Only Manager/Admin can view reports.
-    </p>
+    <div class="access-denied">
+      <strong>Access denied</strong>
+      <p>Only Manager and Admin users can view reports.</p>
+    </div>
   `;
 } else {
   reportBuilder.style.display = "block";
@@ -59,7 +60,7 @@ async function loadLeads() {
 
   } catch (error) {
     console.error("Error loading leads for report:", error);
-    reportOutput.innerHTML = `<p style="color:red;">Failed to load report data.</p>`;
+    reportOutput.innerHTML = `<div class="access-denied"><strong>Report error</strong><p>Failed to load report data.</p></div>`;
   }
 }
 
@@ -74,30 +75,28 @@ function generateReport() {
 
   let filtered = [...leads];
 
-  // 🔥 Apply field filter
   if (filterKey && filterVal) {
-    filtered = filtered.filter(item =>
+    filtered = filtered.filter((item) =>
       String(item[filterKey] || "").toLowerCase() === filterVal
     );
   }
 
-  // 🔥 Apply date range filter
   if (fromDate) {
-    filtered = filtered.filter(item => {
+    filtered = filtered.filter((item) => {
       const itemDate = String(item.date || "");
       return itemDate >= fromDate;
     });
   }
 
   if (toDate) {
-    filtered = filtered.filter(item => {
+    filtered = filtered.filter((item) => {
       const itemDate = String(item.date || "");
       return itemDate <= toDate;
     });
   }
 
   if (filtered.length === 0) {
-    reportOutput.innerHTML = `<p>No matching data found.</p>`;
+    reportOutput.innerHTML = `<div class="empty-state">No matching data found for the selected filters.</div>`;
     reportRows = [];
     return;
   }
@@ -112,7 +111,7 @@ function generateReport() {
 function generateSimpleReport(data, rowKey, valueType) {
   const grouped = {};
 
-  data.forEach(item => {
+  data.forEach((item) => {
     const rowVal = item[rowKey] || "(Blank)";
 
     if (!grouped[rowVal]) {
@@ -140,10 +139,9 @@ function generateSimpleReport(data, rowKey, valueType) {
         <tbody>
   `;
 
-  // ✅ Add CSV header too
   reportRows = [[formatLabel(rowKey), valueLabel]];
 
-  Object.keys(grouped).sort().forEach(key => {
+  Object.keys(grouped).sort().forEach((key) => {
     const value = grouped[key];
     reportRows.push([key, value]);
 
@@ -165,26 +163,26 @@ function generateSimpleReport(data, rowKey, valueType) {
 }
 
 function generatePivotReport(data, rowKey, colKey, valueType) {
-  const rowValues = [...new Set(data.map(item => item[rowKey] || "(Blank)"))].sort();
-  const colValues = [...new Set(data.map(item => item[colKey] || "(Blank)"))].sort();
+  const rowValues = [...new Set(data.map((item) => item[rowKey] || "(Blank)"))].sort();
+  const colValues = [...new Set(data.map((item) => item[colKey] || "(Blank)"))].sort();
 
   const pivot = {};
 
-  rowValues.forEach(r => {
-    pivot[r] = {};
-    colValues.forEach(c => {
-      pivot[r][c] = 0;
+  rowValues.forEach((row) => {
+    pivot[row] = {};
+    colValues.forEach((column) => {
+      pivot[row][column] = 0;
     });
   });
 
-  data.forEach(item => {
-    const r = item[rowKey] || "(Blank)";
-    const c = item[colKey] || "(Blank)";
+  data.forEach((item) => {
+    const row = item[rowKey] || "(Blank)";
+    const column = item[colKey] || "(Blank)";
 
     if (valueType === "count") {
-      pivot[r][c] += 1;
+      pivot[row][column] += 1;
     } else if (valueType === "sum_order_value") {
-      pivot[r][c] += Number(item.order_value || 0);
+      pivot[row][column] += Number(item.order_value || 0);
     }
   });
 
@@ -194,7 +192,7 @@ function generatePivotReport(data, rowKey, colKey, valueType) {
         <thead>
           <tr>
             <th>${formatLabel(rowKey)}</th>
-            ${colValues.map(c => `<th>${c}</th>`).join("")}
+            ${colValues.map((column) => `<th>${column}</th>`).join("")}
             <th>Total</th>
           </tr>
         </thead>
@@ -204,18 +202,18 @@ function generatePivotReport(data, rowKey, colKey, valueType) {
   reportRows = [];
   reportRows.push([formatLabel(rowKey), ...colValues, "Total"]);
 
-  rowValues.forEach(r => {
+  rowValues.forEach((row) => {
     let total = 0;
-    const rowData = [r];
+    const rowData = [row];
 
-    html += `<tr><td>${r}</td>`;
+    html += `<tr><td>${row}</td>`;
 
-    colValues.forEach(c => {
-      const val = pivot[r][c];
-      total += val;
-      rowData.push(val);
+    colValues.forEach((column) => {
+      const value = pivot[row][column];
+      total += value;
+      rowData.push(value);
 
-      html += `<td>${valueType === "sum_order_value" ? "₹ " + val : val}</td>`;
+      html += `<td>${valueType === "sum_order_value" ? "₹ " + value : value}</td>`;
     });
 
     rowData.push(total);
@@ -228,10 +226,10 @@ function generatePivotReport(data, rowKey, colKey, valueType) {
   const totalRow = ["Total"];
   let grandTotal = 0;
 
-  colValues.forEach(c => {
+  colValues.forEach((column) => {
     let colTotal = 0;
-    rowValues.forEach(r => {
-      colTotal += pivot[r][c];
+    rowValues.forEach((row) => {
+      colTotal += pivot[row][column];
     });
     totalRow.push(colTotal);
     grandTotal += colTotal;
@@ -271,8 +269,8 @@ function exportReportCSV() {
   }
 
   const csvContent = reportRows
-    .map(row =>
-      row.map(value => `"${String(value || "").replace(/"/g, '""')}"`).join(",")
+    .map((row) =>
+      row.map((value) => `"${String(value || "").replace(/"/g, '""')}"`).join(",")
     )
     .join("\n");
 
@@ -294,9 +292,9 @@ function setDatePreset(type) {
   let to = "";
 
   if (type === "today") {
-    const t = now.toISOString().split("T")[0];
-    from = t;
-    to = t;
+    const todayValue = now.toISOString().split("T")[0];
+    from = todayValue;
+    to = todayValue;
   }
 
   if (type === "week") {

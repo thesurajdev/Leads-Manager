@@ -2,25 +2,63 @@
 <html lang="en">
 <head>
   <meta charset="UTF-8" />
-  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
-  <title>Login - CRM</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Login - Leads Manager</title>
   <link rel="stylesheet" href="css/style.css" />
 </head>
-<body>
-  <div class="container" style="max-width:400px; margin:auto; margin-top:80px;">
-    <h1 style="text-align:center;">CRM Login</h1>
+<body class="login-page">
+  <div class="login-shell">
+    <section class="login-panel">
+      <div class="login-brand-mark">LM</div>
+      <div class="stack">
+        <span class="eyebrow">Leads Manager</span>
+        <h1>Sales operations, cleaned up for real daily use.</h1>
+        <p>
+          A modern workspace for lead intake, follow-up execution, team visibility, and practical reporting.
+        </p>
+      </div>
 
-    <form id="loginForm">
-      <label>Username</label>
-      <input type="text" id="username" required />
+      <div class="login-feature-list">
+        <div class="login-feature">
+          <strong>Focused workflow</strong>
+          <p>Capture leads, work queues, and movement through the pipeline without clutter.</p>
+        </div>
+        <div class="login-feature">
+          <strong>Role-aware access</strong>
+          <p>Agents, managers, and admins see the right controls for the job.</p>
+        </div>
+        <div class="login-feature">
+          <strong>Created by Surajdev</strong>
+          <p>Visit <a href="https://www.surajdev.com" target="_blank" rel="noopener noreferrer">www.surajdev.com</a>.</p>
+        </div>
+      </div>
+    </section>
 
-      <label>Password</label>
-      <input type="password" id="password" required />
+    <section class="login-card">
+      <div class="stack">
+        <div>
+          <h2>Sign in</h2>
+          <p class="section-note">Access your lead workspace and pick up where the team left off.</p>
+        </div>
 
-      <button type="submit">Login</button>
-    </form>
+        <form id="loginForm">
+          <div>
+            <label>Username</label>
+            <input type="text" id="username" required />
+          </div>
 
-    <p id="loginError" style="color:red; margin-top:10px;"></p>
+          <div>
+            <label>Password</label>
+            <input type="password" id="password" required />
+          </div>
+
+          <button type="submit">Login</button>
+        </form>
+
+        <p id="loginError" class="login-error" style="display:none;"></p>
+        <p class="login-footnote">Created by <a href="https://www.surajdev.com" target="_blank" rel="noopener noreferrer">www.surajdev.com</a></p>
+      </div>
+    </section>
   </div>
 
   <script src="js/config.js"></script>

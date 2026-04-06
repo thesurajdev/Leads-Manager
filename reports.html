@@ -3,16 +3,15 @@
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>Reports - CRM</title>
+  <title>Reports - Leads Manager</title>
   <link rel="stylesheet" href="css/style.css" />
 </head>
-<body>
+<body class="app-page">
   <div class="app-layout">
-    <!-- Sidebar -->
     <aside class="sidebar">
       <div class="sidebar-logo">
-        <h2>Sales CRM</h2>
-        <span class="sidebar-mini">CRM</span>
+        <h2>Leads Manager</h2>
+        <span class="sidebar-mini">LM</span>
       </div>
 
       <nav class="sidebar-nav">
@@ -31,7 +30,6 @@
 
     <div id="sidebarBackdrop" class="sidebar-backdrop" aria-hidden="true"></div>
 
-    <!-- Main Area -->
     <div class="main-wrapper">
       <header class="topbar">
         <div class="topbar-left">
@@ -49,10 +47,27 @@
       </header>
 
       <main class="page-content">
-        <div class="container">
-          <div id="reportAccessMessage" style="margin-top:20px;"></div>
+        <div class="container page-stack">
+          <section class="hero-panel">
+            <span class="eyebrow">Analytics Workspace</span>
+            <div class="section-header" style="margin-top: 18px; margin-bottom: 0;">
+              <div>
+                <h2 class="section-heading">Build fast operational reports</h2>
+                <p class="section-note">Slice the pipeline by owner, source, product, or status, then export the result in one click.</p>
+              </div>
+            </div>
+          </section>
 
-          <div id="reportBuilder" style="display:none; margin-top: 30px;">
+          <div id="reportAccessMessage"></div>
+
+          <section id="reportBuilder" class="panel" style="display:none;">
+            <div class="section-header">
+              <div>
+                <h2 class="section-heading">Report builder</h2>
+                <p class="section-note">Choose dimensions, apply optional filters, and generate a pivot-style output.</p>
+              </div>
+            </div>
+
             <div class="filters-box">
               <select id="rowField">
                 <option value="lead_owner">Lead Owner</option>
@@ -87,23 +102,23 @@
               <input type="text" id="filterValue" placeholder="Filter value (optional)" />
               <input type="date" id="dateFrom" />
               <input type="date" id="dateTo" />
-              <div style="margin-top:10px;">
-                <button onclick="setDatePreset('today')">Today</button>
-                <button onclick="setDatePreset('week')">This Week</button>
-                <button onclick="setDatePreset('month')">This Month</button>
-                <button onclick="setDatePreset('lastMonth')">Last Month</button>
-                <button onclick="setDatePreset('clear')" style="background:#ef4444;">Clear</button>
+              <div class="preset-row">
+                <button type="button" class="btn-secondary" onclick="setDatePreset('today')">Today</button>
+                <button type="button" class="btn-secondary" onclick="setDatePreset('week')">This Week</button>
+                <button type="button" class="btn-secondary" onclick="setDatePreset('month')">This Month</button>
+                <button type="button" class="btn-secondary" onclick="setDatePreset('lastMonth')">Last Month</button>
+                <button type="button" class="btn-danger" onclick="setDatePreset('clear')">Clear</button>
               </div>
 
               <button id="generateReportBtn">Generate Report</button>
             </div>
 
-            <div style="margin-top:20px;">
-              <button onclick="exportReportCSV()" style="background:#10b981;">Export Report CSV</button>
+            <div class="action-row" style="margin-top:20px;">
+              <button type="button" class="btn-success" onclick="exportReportCSV()">Export Report CSV</button>
             </div>
 
             <div id="reportOutput" style="margin-top:30px;"></div>
-          </div>
+          </section>
         </div>
       </main>
     </div>

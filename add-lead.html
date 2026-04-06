@@ -3,16 +3,15 @@
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>Add / Edit Lead - CRM</title>
+  <title>Add / Edit Lead - Leads Manager</title>
   <link rel="stylesheet" href="css/style.css" />
 </head>
-<body>
+<body class="app-page">
   <div class="app-layout">
-    <!-- Sidebar -->
     <aside class="sidebar">
       <div class="sidebar-logo">
-        <h2>Sales CRM</h2>
-        <span class="sidebar-mini">CRM</span>
+        <h2>Leads Manager</h2>
+        <span class="sidebar-mini">LM</span>
       </div>
 
       <nav class="sidebar-nav">
@@ -31,7 +30,6 @@
 
     <div id="sidebarBackdrop" class="sidebar-backdrop" aria-hidden="true"></div>
 
-    <!-- Main Area -->
     <div class="main-wrapper">
       <header class="topbar">
         <div class="topbar-left">
@@ -49,42 +47,71 @@
       </header>
 
       <main class="page-content">
-        <div class="container">
-          <h1 id="pageTitle">Add New Lead</h1>
+        <div class="container page-stack">
+          <section class="hero-panel">
+            <span class="eyebrow">Lead Capture</span>
+            <div class="section-header" style="margin-top: 18px; margin-bottom: 0;">
+              <div>
+                <h2 id="pageTitle" class="section-heading">Add New Lead</h2>
+                <p class="section-note">Capture qualified opportunities with a cleaner form and clearer structure.</p>
+              </div>
+            </div>
+          </section>
 
-          <form id="leadForm">
-            <label>Customer Name</label>
-            <input type="text" id="customer_name" required />
+          <section class="panel">
+            <form id="leadForm" class="form-grid">
+              <div>
+                <label>Customer Name</label>
+                <input type="text" id="customer_name" required />
+              </div>
 
-            <label>Contact No.</label>
-            <input type="text" id="contact_no" required />
+              <div>
+                <label>Contact No.</label>
+                <input type="text" id="contact_no" required />
+              </div>
 
-            <label>Email ID</label>
-            <input type="email" id="email" />
+              <div>
+                <label>Email ID</label>
+                <input type="email" id="email" />
+              </div>
 
-            <label>Lead Source</label>
-            <select id="lead_source" required>
-              <option value="">Loading...</option>
-            </select>
+              <div>
+                <label>Lead Source</label>
+                <select id="lead_source" required>
+                  <option value="">Loading...</option>
+                </select>
+              </div>
 
-            <label>Product Category</label>
-            <select id="product_category" required>
-              <option value="">Loading...</option>
-            </select>
+              <div>
+                <label>Product Category</label>
+                <select id="product_category" required>
+                  <option value="">Loading...</option>
+                </select>
+              </div>
 
-            <label>Lead Owner</label>
-            <input type="text" id="lead_owner" readonly />
+              <div class="field-readonly">
+                <label>Lead Owner</label>
+                <input type="text" id="lead_owner" readonly />
+              </div>
 
-            <label>Status</label>
-            <select id="status" required>
-              <option value="">Loading...</option>
-            </select>
+              <div>
+                <label>Status</label>
+                <select id="status" required>
+                  <option value="">Loading...</option>
+                </select>
+              </div>
 
-            <label>Remarks</label>
-            <textarea id="remarks" rows="4"></textarea>
+              <div class="field-span-2">
+                <label>Remarks</label>
+                <textarea id="remarks" rows="4"></textarea>
+              </div>
 
-            <button type="submit" id="saveLeadBtn">Save Lead</button>
-          </form>
+              <div class="field-span-2 action-row">
+                <button type="submit" id="saveLeadBtn">Save Lead</button>
+                <a class="btn btn-secondary" href="leads.html">Back to Leads</a>
+              </div>
+            </form>
+          </section>
         </div>
       </main>
     </div>

@@ -3,17 +3,15 @@
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>Dashboard - Sales CRM</title>
+  <title>Dashboard - Leads Manager</title>
   <link rel="stylesheet" href="css/style.css" />
 </head>
-<body>
+<body class="app-page">
   <div class="app-layout">
-    
-    <!-- Sidebar -->
     <aside class="sidebar">
       <div class="sidebar-logo">
-        <h2>Sales CRM</h2>
-        <span class="sidebar-mini">CRM</span>
+        <h2>Leads Manager</h2>
+        <span class="sidebar-mini">LM</span>
       </div>
 
       <nav class="sidebar-nav">
@@ -32,10 +30,7 @@
 
     <div id="sidebarBackdrop" class="sidebar-backdrop" aria-hidden="true"></div>
 
-    <!-- Main Area -->
     <div class="main-wrapper">
-
-      <!-- Topbar -->
       <header class="topbar">
         <div class="topbar-left">
           <button id="sidebarToggle" class="icon-btn" type="button" aria-label="Toggle sidebar">☰</button>
@@ -51,11 +46,29 @@
         </div>
       </header>
 
-      <!-- Page Content -->
       <main class="page-content">
-        <div id="dashboardCards" class="dashboard-grid"></div>
-      </main>
+        <div class="container page-stack">
+          <section class="hero-panel">
+            <span class="eyebrow">Performance Overview</span>
+            <div class="section-header" style="margin-top: 18px; margin-bottom: 0;">
+              <div>
+                <h2 class="section-heading">Pipeline health at a glance</h2>
+                <p class="section-note">The dashboard highlights lead flow, follow-up pressure, and business outcome signals in one view.</p>
+              </div>
+            </div>
+          </section>
 
+          <section class="panel">
+            <div class="section-header">
+              <div>
+                <h2 class="section-heading">Key metrics</h2>
+                <p class="section-note">Live totals based on your current role and visibility rules.</p>
+              </div>
+            </div>
+            <div id="dashboardCards" class="dashboard-grid"></div>
+          </section>
+        </div>
+      </main>
     </div>
   </div>
 

@@ -1,13 +1,18 @@
 const form = document.getElementById("loginForm");
 const errorBox = document.getElementById("loginError");
 
+function setLoginError(message) {
+  errorBox.innerText = message || "";
+  errorBox.style.display = message ? "block" : "none";
+}
+
 form.addEventListener("submit", async function (e) {
   e.preventDefault();
 
   const username = document.getElementById("username").value.trim();
   const password = document.getElementById("password").value.trim();
 
-  errorBox.innerText = "";
+  setLoginError("");
 
   try {
     const res = await fetch(API_URL, {
@@ -22,18 +27,15 @@ form.addEventListener("submit", async function (e) {
     const result = await res.json();
 
     if (result.success) {
-      // Save login session
       localStorage.setItem("loggedInUser", result.username);
       localStorage.setItem("userRole", result.role);
-
-      // Redirect
       window.location.href = "dashboard.html";
     } else {
-      errorBox.innerText = "Invalid username or password";
+      setLoginError("Invalid username or password");
     }
 
   } catch (error) {
     console.error("Login error:", error);
-    errorBox.innerText = "Login failed. Try again.";
+    setLoginError("Login failed. Try again.");
   }
 });
