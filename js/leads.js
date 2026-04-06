@@ -60,6 +60,47 @@ async function loadLeads() {
   }
 }
 
+function getLeadPriority(lead) {
+  const today = new Date().toISOString().split("T")[0];
+
+    // 🔴 Overdue
+    if (
+      lead.lead_status === "Open" &&
+      lead.next_followup_date &&
+      lead.next_followup_date < today
+    ) {
+      return { label: "Overdue", color: "#ef4444" };
+    }
+  
+    // 🔥 Today
+    if (
+      lead.lead_status === "Open" &&
+      lead.next_followup_date === today
+    ) {
+      return { label: "Today", color: "#f97316" };
+    }
+  
+    const createdDate = lead.date;
+    if (!createdDate) return { label: "-", color: "#9ca3af" };
+  
+    const diffDays = Math.floor(
+      (new Date(today) - new Date(createdDate)) / (1000 * 60 * 60 * 24)
+    );
+  
+    // 🟢 Hot
+    if (diffDays <= 2) {
+      return { label: "Hot", color: "#22c55e" };
+    }
+  
+    // 🟠 Warm
+    if (diffDays <= 7) {
+      return { label: "Warm", color: "#f59e0b" };
+    }
+  
+    // 🔵 Cold
+    return { label: "Cold", color: "#3b82f6" };
+  }
+
 function populateFilters() {
   const statuses = [...new Set(leads.map(l => l.status).filter(Boolean))];
   const sources = [...new Set(leads.map(l => l.lead_source).filter(Boolean))];
