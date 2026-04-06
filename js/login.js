@@ -1,17 +1,39 @@
-const loginForm = document.getElementById("loginForm");
+const form = document.getElementById("loginForm");
+const errorBox = document.getElementById("loginError");
 
-loginForm.addEventListener("submit", function (e) {
+form.addEventListener("submit", async function (e) {
   e.preventDefault();
 
-  const agentName = document.getElementById("agentName").value;
+  const username = document.getElementById("username").value.trim();
+  const password = document.getElementById("password").value.trim();
 
-  if (!agentName) {
-    alert("Please select your name.");
-    return;
+  errorBox.innerText = "";
+
+  try {
+    const res = await fetch(API_URL, {
+      method: "POST",
+      body: JSON.stringify({
+        type: "login",
+        username,
+        password
+      })
+    });
+
+    const result = await res.json();
+
+    if (result.success) {
+      // Save login session
+      localStorage.setItem("loggedInUser", result.username);
+      localStorage.setItem("userRole", result.role);
+
+      // Redirect
+      window.location.href = "dashboard.html";
+    } else {
+      errorBox.innerText = "Invalid username or password";
+    }
+
+  } catch (error) {
+    console.error("Login error:", error);
+    errorBox.innerText = "Login failed. Try again.";
   }
-
-  localStorage.setItem("loggedInUser", agentName);
-
-  alert(`Welcome, ${agentName}!`);
-  window.location.href = "index.html";
 });
