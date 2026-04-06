@@ -32,6 +32,8 @@ if (loggedInUser !== "Manager" && loggedInUser !== "Admin") {
 }
 
 generateReportBtn.addEventListener("click", generateReport);
+dateFrom.addEventListener("change", generateReport);
+dateTo.addEventListener("change", generateReport);
 
 async function loadLeads() {
   try {
@@ -280,4 +282,53 @@ function exportReportCSV() {
   document.body.appendChild(link);
   link.click();
   document.body.removeChild(link);
+}
+
+function setDatePreset(type) {
+  const today = new Date();
+
+  let from = "";
+  let to = "";
+
+  if (type === "today") {
+    const t = today.toISOString().split("T")[0];
+    from = t;
+    to = t;
+  }
+
+  if (type === "week") {
+    const firstDay = new Date(today.setDate(today.getDate() - today.getDay()));
+    const lastDay = new Date(firstDay);
+    lastDay.setDate(firstDay.getDate() + 6);
+
+    from = firstDay.toISOString().split("T")[0];
+    to = lastDay.toISOString().split("T")[0];
+  }
+
+  if (type === "month") {
+    const firstDay = new Date(today.getFullYear(), today.getMonth(), 1);
+    const lastDay = new Date(today.getFullYear(), today.getMonth() + 1, 0);
+
+    from = firstDay.toISOString().split("T")[0];
+    to = lastDay.toISOString().split("T")[0];
+  }
+
+  if (type === "lastMonth") {
+    const firstDay = new Date(today.getFullYear(), today.getMonth() - 1, 1);
+    const lastDay = new Date(today.getFullYear(), today.getMonth(), 0);
+
+    from = firstDay.toISOString().split("T")[0];
+    to = lastDay.toISOString().split("T")[0];
+  }
+
+  if (type === "clear") {
+    from = "";
+    to = "";
+  }
+
+  dateFrom.value = from;
+  dateTo.value = to;
+
+  // 🔥 auto generate report after selecting preset
+  generateReport();
 }
