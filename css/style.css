@@ -198,3 +198,25 @@ table th {
   border-radius: 8px;
   min-width: 220px;
 }
+
+.table-wrapper {
+  overflow-x: auto;
+  margin-top: 20px;
+}
+
+table {
+  width: 100%;
+  border-collapse: collapse;
+  background: #fff;
+}
+
+table th,
+table td {
+  border: 1px solid #e5e7eb;
+  padding: 12px;
+  text-align: left;
+}
+
+table th {
+  background: #f3f4f6;
+}
