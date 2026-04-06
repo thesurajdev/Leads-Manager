@@ -54,6 +54,13 @@
         <input type="text" id="filterValue" placeholder="Filter value (optional)" />
         <input type="date" id="dateFrom" />
         <input type="date" id="dateTo" />
+        <div style="margin-top:10px;">
+          <button onclick="setDatePreset('today')">Today</button>
+          <button onclick="setDatePreset('week')">This Week</button>
+          <button onclick="setDatePreset('month')">This Month</button>
+          <button onclick="setDatePreset('lastMonth')">Last Month</button>
+          <button onclick="setDatePreset('clear')" style="background:#ef4444;">Clear</button>
+        </div>
 
         <button id="generateReportBtn">Generate Report</button>
       </div>
