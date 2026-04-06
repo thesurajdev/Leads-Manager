@@ -10,10 +10,28 @@ if (!loggedInUser || !userRole) {
 
 const today = new Date().toISOString().split("T")[0];
 
+// Show loading immediately
+if (dashboardCards) {
+  dashboardCards.innerHTML = `
+    <div class="dashboard-card">
+      <h3>Loading dashboard...</h3>
+      <p>Please wait</p>
+    </div>
+  `;
+}
+
 async function loadDashboardData() {
   try {
+    console.log("API_URL:", API_URL);
+
     const leadsRes = await fetch(API_URL);
     const leadsRaw = await leadsRes.json();
+
+    console.log("Dashboard API Response:", leadsRaw);
+
+    if (!Array.isArray(leadsRaw)) {
+      throw new Error("API did not return an array");
+    }
 
     leads = leadsRaw.map((lead, index) => ({
       id: index + 1,
@@ -35,9 +53,16 @@ async function loadDashboardData() {
     renderDashboard();
   } catch (error) {
     console.error("Dashboard load error:", error);
+
     dashboardCards.innerHTML = `
-      <div class="card">
-        <p style="color:red;">Failed to load dashboard data.</p>
+      <div class="dashboard-card">
+        <h3 style="color:#dc2626;">Dashboard Error</h3>
+        <p style="color:#6b7280; margin-top:8px;">
+          Failed to load dashboard data.
+        </p>
+        <p style="margin-top:10px; font-size:13px; color:#dc2626;">
+          ${error.message}
+        </p>
       </div>
     `;
   }
