@@ -12,6 +12,8 @@ const columnField = document.getElementById("columnField");
 const valueField = document.getElementById("valueField");
 const filterField = document.getElementById("filterField");
 const filterValue = document.getElementById("filterValue");
+const dateFrom = document.getElementById("dateFrom");
+const dateTo = document.getElementById("dateTo");
 const generateReportBtn = document.getElementById("generateReportBtn");
 
 if (!loggedInUser) {
@@ -64,14 +66,31 @@ function generateReport() {
   const valueType = valueField.value;
   const filterKey = filterField.value;
   const filterVal = filterValue.value.trim().toLowerCase();
+  const fromDate = dateFrom.value;
+  const toDate = dateTo.value;
 
   let filtered = [...leads];
 
-  // Apply filter
+  // 🔥 Apply field filter
   if (filterKey && filterVal) {
     filtered = filtered.filter(item =>
       String(item[filterKey] || "").toLowerCase() === filterVal
     );
+  }
+
+  // 🔥 Apply date range filter on Created Date
+  if (fromDate) {
+    filtered = filtered.filter(item => {
+      const itemDate = String(item.date || "");
+      return itemDate >= fromDate;
+    });
+  }
+
+  if (toDate) {
+    filtered = filtered.filter(item => {
+      const itemDate = String(item.date || "");
+      return itemDate <= toDate;
+    });
   }
 
   if (filtered.length === 0) {
