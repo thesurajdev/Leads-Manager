@@ -1,4 +1,4 @@
-const API_URL = "https://script.google.com/macros/s/AKfycbxjAw-jF4pZqEWpAaWMkngVJQXpotpidD2ouEZt8KAc64qlLWMZixlae7eToP1EagMP/exec";
+const API_URL = "https://script.google.com/macros/s/AKfycbzIAaoiMnYH6aIJQnKAu93Y3bemMhPheIzioxdUgv1P1eBbuVFWbq_EAvP10S2jVc_u/exec";
 /*const Deployment_ID = "AKfycbyaTkDRx7dejPy2KvAv599ItfZunT4q54p-2TZLqgm6J9yvu4wN_fJ3evzWvrPNGzXM";*/
 
 window.AuthSession = (() => {
