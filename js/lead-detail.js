@@ -232,6 +232,17 @@ function renderConditionalFields(status) {
 
   activeConditionalFields = conditionalFieldsByStatus[status] || [];
 
+  const remarksTextarea = document.getElementById("followup_remarks");
+  if (remarksTextarea) {
+    if (activeConditionalFields.length > 0) {
+      remarksTextarea.removeAttribute("required");
+      remarksTextarea.removeAttribute("minlength");
+    } else {
+      remarksTextarea.setAttribute("required", "");
+      remarksTextarea.setAttribute("minlength", "5");
+    }
+  }
+
   if (!activeConditionalFields.length) {
     conditionalFollowupFields.innerHTML = "";
     return;
@@ -644,7 +655,10 @@ followupForm.addEventListener("submit", async function (e) {
     }
   }
 
-  if (remarks.length < 5) {
+  const hasConditionalFields = activeConditionalFields.length > 0;
+  const remarksRequired = !hasConditionalFields;
+
+  if (remarksRequired && remarks.length < 5) {
     validationErrors.push("Remarks must be at least 5 characters.");
   }
 
@@ -669,7 +683,7 @@ followupForm.addEventListener("submit", async function (e) {
   );
   document.getElementById("followup_remarks").classList.toggle(
     "is-invalid",
-    remarks.length < 5 || remarks.length > 600
+    (remarksRequired && remarks.length < 5) || remarks.length > 600
   );
   document.getElementById("next_followup_date").classList.toggle(
     "is-invalid",
