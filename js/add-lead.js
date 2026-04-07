@@ -179,6 +179,11 @@ if (statusSelect) {
   statusSelect.addEventListener("change", () => renderConditionalLeadFields(statusSelect.value));
 }
 
+function deriveLeadStatus(statusValue) {
+  const normalizedStatus = String(statusValue || "").trim().toLowerCase();
+  return normalizedStatus === "won" || normalizedStatus === "lost" ? "Closed" : "Open";
+}
+
 function validateLeadForm() {
   const customerNameInput = document.getElementById("customer_name");
   const contactInput = document.getElementById("contact_no");
@@ -522,7 +527,7 @@ form.addEventListener("submit", async function (e) {
       product_category,
       status,
       remarks,
-      lead_status: "Open",
+      lead_status: deriveLeadStatus(status),
       order_value: 0,
       next_followup_date: "",
       conditional_fields: conditionalValues

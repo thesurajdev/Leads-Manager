@@ -250,6 +250,14 @@ function outputJSON(data) {
       row[extraDataColumnIndex] = JSON.stringify(unresolvedConditionalFields);
     }
   }
+
+  function normalizeLeadLifecycle(statusValue) {
+    const normalizedStatus = String(statusValue || "").trim().toLowerCase();
+    if (normalizedStatus === "won" || normalizedStatus === "lost") {
+      return "Closed";
+    }
+    return "Open";
+  }
   
   function doGet(e) {
     const action = e.parameter.action || "leads";
@@ -573,6 +581,9 @@ function outputJSON(data) {
             if (leadHeaderIndex["status"] !== undefined) {
               updatedRow[leadHeaderIndex["status"]] = sanitizeCellValue(data.status || "");
             }
+            if (leadHeaderIndex["lead status"] !== undefined) {
+              updatedRow[leadHeaderIndex["lead status"]] = normalizeLeadLifecycle(data.status || "");
+            }
             if (leadHeaderIndex["remarks"] !== undefined) {
               updatedRow[leadHeaderIndex["remarks"]] = sanitizeCellValue(data.remarks || "");
             }
@@ -665,10 +676,7 @@ function outputJSON(data) {
             updatedRow[remarksColumn] = sanitizeCellValue(data.remarks || "");
           }
 
-          const finalLeadStatus =
-            data.followup_status === "Won" || data.followup_status === "Lost"
-              ? "Closed"
-              : "Open";
+          const finalLeadStatus = normalizeLeadLifecycle(data.followup_status || "");
 
           if (leadStatusColumn !== undefined) {
             updatedRow[leadStatusColumn] = finalLeadStatus;
@@ -743,6 +751,7 @@ function outputJSON(data) {
   
       // 🔥 SAVE NEW LEAD
       const newLeadRow = new Array(leadHeaders.length).fill("");
+      const derivedLeadStatus = normalizeLeadLifecycle(data.status || "");
       const leadBaseValues = {
         "Lead ID": data.lead_id || "",
         "Created Date": data.created_date || "",
@@ -754,7 +763,7 @@ function outputJSON(data) {
         "Product Category": data.product_category || "",
         "Status": data.status || "",
         "Remarks": data.remarks || "",
-        "Lead Status": data.lead_status || "",
+        "Lead Status": derivedLeadStatus,
         "Order Value": data.order_value || 0,
         "Next Follow-up Date": data.next_followup_date || ""
       };

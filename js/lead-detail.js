@@ -57,6 +57,11 @@ function showFollowupSubmitNotice(title, message, type = "success") {
   followupSubmitNotice.style.display = "block";
 }
 
+function isClosedStatus(statusValue) {
+  const normalizedStatus = String(statusValue || "").trim().toLowerCase();
+  return normalizedStatus === "won" || normalizedStatus === "lost";
+}
+
 function parseBoolean(value) {
   const normalized = String(value || "").trim().toLowerCase();
   return ["true", "yes", "1", "required", "y"].includes(normalized);
@@ -705,7 +710,7 @@ followupForm.addEventListener("submit", async function (e) {
     validationErrors.push("Remarks cannot exceed 600 characters.");
   }
 
-  const statusNeedsNextFollowup = followup_status !== "Won" && followup_status !== "Lost";
+  const statusNeedsNextFollowup = !isClosedStatus(followup_status);
   if (statusNeedsNextFollowup && !next_followup_date) {
     validationErrors.push("Next Follow-up Date is required unless status is Won or Lost.");
   }
