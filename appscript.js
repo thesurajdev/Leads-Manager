@@ -307,11 +307,18 @@ function outputJSON(data) {
         const email = String(lead["Email ID"] || "");
         const source = String(lead["Lead Source"] || "");
         const status = String(lead["Status"] || "");
+        const leadStatus = String(lead["Lead Status"] || "");
+        const isOpenLead = leadStatus.toLowerCase() === "open";
 
-        const searchable = [leadId, customer, contact, email, source, status, owner].join(" ").toLowerCase();
+        const searchable = [leadId, customer, contact, email, source, status, leadStatus, owner].join(" ").toLowerCase();
         if (searchable.indexOf(query) === -1) return;
 
         if (!isPrivileged && !isOwnedByUser) {
+          if (!isOpenLead) {
+            // Non-privileged users can only discover other agents' leads when the lead is still open.
+            return;
+          }
+
           results.push({
             kind: "lead",
             title: leadId || "Lead",
