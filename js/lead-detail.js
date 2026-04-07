@@ -9,6 +9,7 @@ const timelineBox = document.getElementById("leadTimeline");
 const leadSummaryStrip = document.getElementById("leadSummaryStrip");
 const followupStatusSelect = document.getElementById("followup_status");
 const conditionalFollowupFields = document.getElementById("conditionalFollowupFields");
+const followupSubmitNotice = document.getElementById("followupSubmitNotice");
 
 const loggedInUser = localStorage.getItem("loggedInUser");
 const userRole = localStorage.getItem("userRole");
@@ -39,6 +40,20 @@ function escapeHtml(value) {
     .replace(/>/g, "&gt;")
     .replace(/"/g, "&quot;")
     .replace(/'/g, "&#39;");
+}
+
+function clearFollowupSubmitNotice() {
+  if (!followupSubmitNotice) return;
+  followupSubmitNotice.style.display = "none";
+  followupSubmitNotice.className = "notice";
+  followupSubmitNotice.innerHTML = "";
+}
+
+function showFollowupSubmitNotice(title, message, type = "success") {
+  if (!followupSubmitNotice) return;
+  followupSubmitNotice.className = type === "error" ? "notice notice-danger" : "notice";
+  followupSubmitNotice.innerHTML = `<strong>${escapeHtml(title)}</strong><span>${escapeHtml(message)}</span>`;
+  followupSubmitNotice.style.display = "block";
 }
 
 function parseBoolean(value) {
@@ -639,6 +654,8 @@ followupForm.addEventListener("submit", async function (e) {
     submitBtn.textContent = "Saving...";
   }
 
+  clearFollowupSubmitNotice();
+
   // Yield to browser so the button state paints before validation + fetch work begins.
   await new Promise((resolve) => setTimeout(resolve, 0));
 
@@ -745,17 +762,21 @@ followupForm.addEventListener("submit", async function (e) {
     if (result.success) {
       window.AppDataCache.invalidate(["leads", "followups"]);
       window.AppDataCache.prefetch(["leads", "followups", "master"]);
-      alert("Follow-up added successfully!");
+      showFollowupSubmitNotice("Follow-up submitted successfully.", "You can continue with the next update.");
       followupForm.reset();
-      loadLeadAndFollowups();
+      renderConditionalFields(followupStatusSelect.value);
+      await loadLeadAndFollowups();
+      window.scrollTo({ top: 0, behavior: "smooth" });
     } else {
       alert("Failed to save follow-up.");
-      resetSubmitState();
+      showFollowupSubmitNotice("Submission failed.", "Please try again.", "error");
     }
 
   } catch (error) {
     console.error("Error saving follow-up:", error);
     alert("Error saving follow-up.");
+    showFollowupSubmitNotice("Submission failed.", error.message || "Please try again.", "error");
+  } finally {
     resetSubmitState();
   }
 });

@@ -1,5 +1,6 @@
 const form = document.getElementById("leadForm");
 const saveLeadBtn = document.getElementById("saveLeadBtn");
+const submitNotice = document.getElementById("submitNotice");
 const pageTitle = document.getElementById("pageTitle");
 const statusSelect = document.getElementById("status");
 const conditionalLeadFields = document.getElementById("conditionalLeadFields");
@@ -33,6 +34,20 @@ function parseOptionList(value) {
     .split(/[|,]/)
     .map((o) => o.trim())
     .filter(Boolean);
+}
+
+function clearSubmitNotice() {
+  if (!submitNotice) return;
+  submitNotice.style.display = "none";
+  submitNotice.className = "notice";
+  submitNotice.innerHTML = "";
+}
+
+function showSubmitNotice(title, message, type = "success") {
+  if (!submitNotice) return;
+  submitNotice.className = type === "error" ? "notice notice-danger" : "notice";
+  submitNotice.innerHTML = `<strong>${escapeHtml(title)}</strong><span>${escapeHtml(message)}</span>`;
+  submitNotice.style.display = "block";
 }
 
 function deriveStatusFromType(typeValue) {
@@ -394,6 +409,7 @@ form.addEventListener("submit", async function (e) {
 
   saveLeadBtn.disabled = true;
   saveLeadBtn.innerText = isEditMode ? "Updating..." : "Saving...";
+  clearSubmitNotice();
 
   // Yield to browser so the button state paints before validation + fetch work begins.
   await new Promise((resolve) => setTimeout(resolve, 0));
@@ -414,9 +430,6 @@ form.addEventListener("submit", async function (e) {
   if (!validation.valid || conditionalErrors.length) {
     const allErrors = [...validation.errors, ...conditionalErrors];
     alert(`Please fix the following before submitting:\n\n- ${allErrors.join("\n- ")}`);
-    saveLeadBtn.disabled = false;
-    saveLeadBtn.innerText = isEditMode ? "Update Lead" : "Save Lead";
-    isSubmitting = false;
     return;
   }
 
@@ -461,10 +474,6 @@ form.addEventListener("submit", async function (e) {
       } else {
         alert("Failed to update lead.\n\n" + JSON.stringify(result));
       }
-
-      saveLeadBtn.disabled = false;
-      saveLeadBtn.innerText = "Update Lead";
-      isSubmitting = false;
       return;
     }
 
@@ -503,10 +512,6 @@ form.addEventListener("submit", async function (e) {
         `Current Status: ${duplicate.status}\n\n` +
         `This lead is already OPEN and cannot be added again.`
       );
-
-      saveLeadBtn.disabled = false;
-      saveLeadBtn.innerText = "Save Lead";
-      isSubmitting = false;
       return;
     }
 
@@ -540,8 +545,11 @@ form.addEventListener("submit", async function (e) {
     if (result.success) {
       window.AppDataCache.invalidate(["leads", "followups"]);
       window.AppDataCache.prefetch(["leads", "followups", "master"]);
-      alert("Lead added successfully!");
-      window.location.href = "leads.html";
+      form.reset();
+      document.getElementById("lead_owner").value = loggedInUser;
+      renderConditionalLeadFields("");
+      showSubmitNotice("Lead submitted successfully.", "You can add the next lead now.");
+      window.scrollTo({ top: 0, behavior: "smooth" });
     } else if (result.duplicate) {
       alert(
         `Duplicate Lead Found!\n\n` +
@@ -551,22 +559,16 @@ form.addEventListener("submit", async function (e) {
         `Current Status: ${result.duplicate_data.status}\n\n` +
         `This lead is already OPEN and cannot be added again.`
       );
-
-      saveLeadBtn.disabled = false;
-      saveLeadBtn.innerText = "Save Lead";
-      isSubmitting = false;
     } else {
       alert("Failed to save lead.\n\n" + JSON.stringify(result));
-
-      saveLeadBtn.disabled = false;
-      saveLeadBtn.innerText = "Save Lead";
-      isSubmitting = false;
     }
 
   } catch (error) {
     console.error("REAL ERROR:", error);
     alert("Real Error:\n\n" + error.message);
 
+    showSubmitNotice("Submission failed.", error.message || "Please try again.", "error");
+  } finally {
     saveLeadBtn.disabled = false;
     saveLeadBtn.innerText = isEditMode ? "Update Lead" : "Save Lead";
     isSubmitting = false;
