@@ -175,7 +175,7 @@ function loadFollowupStatusOptions(rows) {
   if (!followupStatusSelect) return;
 
   const statuses = rows
-    .filter((item) => String(item["Type"] || "").trim() === "Follow-up Status")
+    .filter((item) => String(item["Type"] || "").trim() === "Status")
     .map((item) => String(item["Value"] || "").trim())
     .filter(Boolean);
 
