@@ -4,7 +4,17 @@ const pageTitle = document.getElementById("pageTitle");
 
 const loggedInUser = localStorage.getItem("loggedInUser");
 const userRole = localStorage.getItem("userRole");
-const editLeadId = localStorage.getItem("editLeadId");
+const urlParams = new URLSearchParams(window.location.search);
+const editModeRequested = urlParams.get("mode") === "edit";
+
+let editLeadId = null;
+
+if (editModeRequested) {
+  editLeadId = localStorage.getItem("editLeadId");
+} else {
+  // Prevent stale edit state when user opens Add Lead normally.
+  localStorage.removeItem("editLeadId");
+}
 
 if (!loggedInUser || !userRole) {
   window.location.href = "login.html";
@@ -31,6 +41,8 @@ async function initPage() {
       await loadLeadForEdit(editLeadId);
       saveLeadBtn.innerText = "Update Lead";
     } else {
+      // If edit mode is requested without an id, fail safe to add mode.
+      localStorage.removeItem("editLeadId");
       pageTitle.innerText = "Add New Lead";
       saveLeadBtn.innerText = "Save Lead";
     }

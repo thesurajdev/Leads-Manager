@@ -271,7 +271,7 @@ function viewLead(id) {
 
 function editLead(leadId) {
   localStorage.setItem("editLeadId", leadId);
-  window.location.href = "add-lead.html";
+  window.location.href = "add-lead.html?mode=edit";
 }
 
 async function reassignLead(leadId, currentOwner) {
