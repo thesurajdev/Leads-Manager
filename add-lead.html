@@ -59,17 +59,17 @@
             <form id="leadForm" class="form-grid">
               <div>
                 <label>Customer Name</label>
-                <input type="text" id="customer_name" required />
+                <input type="text" id="customer_name" minlength="3" maxlength="80" required />
               </div>
 
               <div>
                 <label>Contact No.</label>
-                <input type="text" id="contact_no" required />
+                <input type="text" id="contact_no" inputmode="tel" minlength="10" maxlength="15" pattern="[0-9]{10,15}" required />
               </div>
 
               <div>
                 <label>Email ID</label>
-                <input type="email" id="email" />
+                <input type="email" id="email" maxlength="120" />
               </div>
 
               <div>
@@ -100,7 +100,7 @@
 
               <div class="field-span-2">
                 <label>Remarks</label>
-                <textarea id="remarks" rows="4"></textarea>
+                <textarea id="remarks" rows="4" maxlength="600"></textarea>
               </div>
 
               <div class="field-span-2 action-row">

@@ -222,19 +222,26 @@ followupForm.addEventListener("submit", async function (e) {
   e.preventDefault();
 
   const submitBtn = followupForm.querySelector("button[type='submit']");
+  const resetSubmitState = () => {
+    if (submitBtn) {
+      submitBtn.disabled = false;
+      submitBtn.textContent = "Add Follow-up";
+    }
+  };
+
   if (submitBtn) {
     submitBtn.disabled = true;
     submitBtn.textContent = "Saving...";
   }
 
-  if (!lead) return;
+  if (!lead) {
+    resetSubmitState();
+    return;
+  }
 
   if (lead.lead_status !== "Open") {
     alert("This lead is closed. No more follow-ups can be added.");
-    if (submitBtn) {
-      submitBtn.disabled = false;
-      submitBtn.textContent = "Add Follow-up";
-    }
+    resetSubmitState();
     return;
   }
 
@@ -243,6 +250,57 @@ followupForm.addEventListener("submit", async function (e) {
   const followup_status = document.getElementById("followup_status").value;
   const remarks = document.getElementById("followup_remarks").value.trim();
   const next_followup_date = document.getElementById("next_followup_date").value;
+
+  const validationErrors = [];
+  const today = new Date();
+  today.setHours(0, 0, 0, 0);
+
+  if (!followup_date) {
+    validationErrors.push("Follow-up Date is required.");
+  }
+
+  if (followup_date) {
+    const followupDateObj = new Date(followup_date);
+    if (followupDateObj > today) {
+      validationErrors.push("Follow-up Date cannot be in the future.");
+    }
+  }
+
+  if (remarks.length < 5) {
+    validationErrors.push("Remarks must be at least 5 characters.");
+  }
+
+  if (remarks.length > 600) {
+    validationErrors.push("Remarks cannot exceed 600 characters.");
+  }
+
+  const statusNeedsNextFollowup = followup_status !== "Won" && followup_status !== "Lost";
+  if (statusNeedsNextFollowup && !next_followup_date) {
+    validationErrors.push("Next Follow-up Date is required unless status is Won or Lost.");
+  }
+
+  if (next_followup_date && followup_date && next_followup_date < followup_date) {
+    validationErrors.push("Next Follow-up Date cannot be earlier than Follow-up Date.");
+  }
+
+  document.getElementById("followup_date").classList.toggle(
+    "is-invalid",
+    !followup_date || new Date(followup_date) > today
+  );
+  document.getElementById("followup_remarks").classList.toggle(
+    "is-invalid",
+    remarks.length < 5 || remarks.length > 600
+  );
+  document.getElementById("next_followup_date").classList.toggle(
+    "is-invalid",
+    (statusNeedsNextFollowup && !next_followup_date) || (next_followup_date && followup_date && next_followup_date < followup_date)
+  );
+
+  if (validationErrors.length) {
+    alert(`Please fix the following before submitting:\n\n- ${validationErrors.join("\n- ")}`);
+    resetSubmitState();
+    return;
+  }
 
   const newFollowup = {
     type: "followup",
@@ -274,18 +332,12 @@ followupForm.addEventListener("submit", async function (e) {
       loadLeadAndFollowups();
     } else {
       alert("Failed to save follow-up.");
-      if (submitBtn) {
-        submitBtn.disabled = false;
-        submitBtn.textContent = "Add Follow-up";
-      }
+      resetSubmitState();
     }
 
   } catch (error) {
     console.error("Error saving follow-up:", error);
     alert("Error saving follow-up.");
-    if (submitBtn) {
-      submitBtn.disabled = false;
-      submitBtn.textContent = "Add Follow-up";
-    }
+    resetSubmitState();
   }
 });

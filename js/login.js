@@ -9,10 +9,38 @@ function setLoginError(message) {
 form.addEventListener("submit", async function (e) {
   e.preventDefault();
 
-  const username = document.getElementById("username").value.trim();
-  const password = document.getElementById("password").value.trim();
+  const usernameInput = document.getElementById("username");
+  const passwordInput = document.getElementById("password");
+  const username = usernameInput.value.trim();
+  const password = passwordInput.value.trim();
 
   setLoginError("");
+
+  const validationErrors = [];
+
+  if (username.length < 3) {
+    validationErrors.push("Username must be at least 3 characters.");
+  }
+
+  if (username.length > 50) {
+    validationErrors.push("Username cannot exceed 50 characters.");
+  }
+
+  if (password.length < 4) {
+    validationErrors.push("Password must be at least 4 characters.");
+  }
+
+  if (password.length > 100) {
+    validationErrors.push("Password cannot exceed 100 characters.");
+  }
+
+  usernameInput.classList.toggle("is-invalid", username.length < 3 || username.length > 50);
+  passwordInput.classList.toggle("is-invalid", password.length < 4 || password.length > 100);
+
+  if (validationErrors.length) {
+    setLoginError(validationErrors.join(" "));
+    return;
+  }
 
   try {
     const res = await fetch(API_URL, {

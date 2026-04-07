@@ -2,6 +2,84 @@ const form = document.getElementById("leadForm");
 const saveLeadBtn = document.getElementById("saveLeadBtn");
 const pageTitle = document.getElementById("pageTitle");
 
+function validateLeadForm() {
+  const customerNameInput = document.getElementById("customer_name");
+  const contactInput = document.getElementById("contact_no");
+  const emailInput = document.getElementById("email");
+  const sourceInput = document.getElementById("lead_source");
+  const productInput = document.getElementById("product_category");
+  const ownerInput = document.getElementById("lead_owner");
+  const statusInput = document.getElementById("status");
+  const remarksInput = document.getElementById("remarks");
+
+  const customerName = customerNameInput.value.trim();
+  const contactNo = contactInput.value.trim();
+  const email = emailInput.value.trim();
+  const leadSource = sourceInput.value.trim();
+  const productCategory = productInput.value.trim();
+  const leadOwner = ownerInput.value.trim();
+  const status = statusInput.value.trim();
+  const remarks = remarksInput.value.trim();
+
+  const errors = [];
+
+  if (customerName.length < 3) {
+    errors.push("Customer Name must be at least 3 characters.");
+  }
+
+  if (customerName.length > 80) {
+    errors.push("Customer Name cannot exceed 80 characters.");
+  }
+
+  const contactDigits = contactNo.replace(/\D/g, "");
+  if (contactDigits.length < 10 || contactDigits.length > 15) {
+    errors.push("Contact No. must contain 10 to 15 digits.");
+  }
+
+  if (email) {
+    const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]{2,}$/;
+    if (!emailRegex.test(email)) {
+      errors.push("Email ID is not valid.");
+    }
+  }
+
+  if (!leadSource) {
+    errors.push("Please select a Lead Source.");
+  }
+
+  if (!productCategory) {
+    errors.push("Please select a Product Category.");
+  }
+
+  if (!status) {
+    errors.push("Please select a Status.");
+  }
+
+  if (!leadOwner) {
+    errors.push("Lead Owner is missing. Please login again.");
+  }
+
+  if (remarks.length > 600) {
+    errors.push("Remarks cannot exceed 600 characters.");
+  }
+
+  customerNameInput.classList.toggle("is-invalid", customerName.length < 3 || customerName.length > 80);
+  contactInput.classList.toggle("is-invalid", contactDigits.length < 10 || contactDigits.length > 15);
+  emailInput.classList.toggle(
+    "is-invalid",
+    Boolean(email) && !/^[^\s@]+@[^\s@]+\.[^\s@]{2,}$/.test(email)
+  );
+  sourceInput.classList.toggle("is-invalid", !leadSource);
+  productInput.classList.toggle("is-invalid", !productCategory);
+  statusInput.classList.toggle("is-invalid", !status);
+  remarksInput.classList.toggle("is-invalid", remarks.length > 600);
+
+  return {
+    valid: errors.length === 0,
+    errors
+  };
+}
+
 const loggedInUser = localStorage.getItem("loggedInUser");
 const userRole = localStorage.getItem("userRole");
 const urlParams = new URLSearchParams(window.location.search);
@@ -157,6 +235,15 @@ form.addEventListener("submit", async function (e) {
   const lead_owner = document.getElementById("lead_owner").value.trim();
   const status = document.getElementById("status").value.trim();
   const remarks = document.getElementById("remarks").value.trim();
+
+  const validation = validateLeadForm();
+  if (!validation.valid) {
+    alert(`Please fix the following before submitting:\n\n- ${validation.errors.join("\n- ")}`);
+    saveLeadBtn.disabled = false;
+    saveLeadBtn.innerText = isEditMode ? "Update Lead" : "Save Lead";
+    isSubmitting = false;
+    return;
+  }
 
   try {
     // 🔥 EDIT MODE

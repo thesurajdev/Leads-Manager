@@ -222,6 +222,25 @@ textarea:focus {
   box-shadow: var(--ring);
 }
 
+input.is-invalid,
+select.is-invalid,
+textarea.is-invalid,
+input:invalid,
+select:invalid,
+textarea:invalid {
+  border-color: rgba(217, 72, 95, 0.48);
+  background: rgba(255, 244, 246, 0.8);
+}
+
+input.is-invalid:focus,
+select.is-invalid:focus,
+textarea.is-invalid:focus,
+input:invalid:focus,
+select:invalid:focus,
+textarea:invalid:focus {
+  box-shadow: 0 0 0 4px rgba(217, 72, 95, 0.16);
+}
+
 label {
   display: block;
   margin-bottom: 10px;
