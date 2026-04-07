@@ -197,6 +197,175 @@ try {
   // ignore
 }
 
+let sidebarSearchDebounceTimer = null;
+let sidebarSearchRequestId = 0;
+
+function getMenuSearchItems() {
+  return Array.from(document.querySelectorAll(".sidebar-nav a[href]")).map((link) => ({
+    kind: "menu",
+    title: String(link.textContent || "").trim(),
+    subtitle: "Menu",
+    target_page: String(link.getAttribute("href") || "index.html")
+  }));
+}
+
+function normalizeForSearch(value) {
+  return String(value || "").trim().toLowerCase();
+}
+
+function createSidebarResultItem(item, query) {
+  const result = document.createElement("a");
+  result.className = "sidebar-search-item";
+  result.href = item.target_page || "index.html";
+
+  const left = document.createElement("div");
+  left.className = "sidebar-search-item-copy";
+
+  const title = document.createElement("strong");
+  title.textContent = item.title || "Result";
+
+  const subtitle = document.createElement("span");
+  const owner = item.owner ? `Owner: ${item.owner}` : "";
+  const assignedHint = item.assigned_to_me === false ? "Not assigned to you" : "";
+  subtitle.textContent = [item.subtitle || "", owner, assignedHint].filter(Boolean).join(" • ");
+
+  left.appendChild(title);
+  left.appendChild(subtitle);
+
+  const chip = document.createElement("em");
+  chip.className = `sidebar-search-chip ${item.kind === "menu" ? "menu" : "data"}`;
+  chip.textContent = item.kind === "menu" ? "Menu" : "Data";
+
+  result.appendChild(left);
+  result.appendChild(chip);
+
+  if (item.kind !== "menu") {
+    result.addEventListener("click", () => {
+      try {
+        sessionStorage.setItem("lm_sidebar_search_query", String(query || ""));
+      } catch (e) {
+        // ignore
+      }
+    });
+  }
+
+  return result;
+}
+
+function renderSidebarSearchResults(container, query, menuMatches, dataResults, isLoading) {
+  container.innerHTML = "";
+
+  const hasAny = menuMatches.length || dataResults.length;
+
+  if (isLoading) {
+    const loading = document.createElement("div");
+    loading.className = "sidebar-search-state";
+    loading.textContent = "Searching...";
+    container.appendChild(loading);
+    return;
+  }
+
+  if (!hasAny) {
+    const empty = document.createElement("div");
+    empty.className = "sidebar-search-state";
+    empty.textContent = "No matches found.";
+    container.appendChild(empty);
+    return;
+  }
+
+  const all = [...menuMatches, ...dataResults].slice(0, 10);
+  all.forEach((item) => {
+    container.appendChild(createSidebarResultItem(item, query));
+  });
+}
+
+function initSidebarSearch() {
+  const sidebar = document.querySelector(".sidebar");
+  const nav = document.querySelector(".sidebar-nav");
+  if (!sidebar || !nav) return;
+  if (document.querySelector(".sidebar-search")) return;
+
+  const wrapper = document.createElement("div");
+  wrapper.className = "sidebar-search";
+
+  const input = document.createElement("input");
+  input.type = "search";
+  input.id = "sidebarSearchInput";
+  input.className = "sidebar-search-input";
+  input.placeholder = "Search menu, leads, follow-ups...";
+  input.autocomplete = "off";
+
+  const results = document.createElement("div");
+  results.className = "sidebar-search-results";
+  results.hidden = true;
+
+  wrapper.appendChild(input);
+  wrapper.appendChild(results);
+  sidebar.insertBefore(wrapper, nav);
+
+  const menuItems = getMenuSearchItems();
+
+  input.addEventListener("input", () => {
+    const query = normalizeForSearch(input.value);
+    const menuMatches = menuItems.filter((item) => normalizeForSearch(item.title).includes(query));
+
+    if (!query) {
+      results.hidden = true;
+      results.innerHTML = "";
+      return;
+    }
+
+    results.hidden = false;
+    renderSidebarSearchResults(results, query, menuMatches, [], true);
+
+    if (sidebarSearchDebounceTimer) {
+      clearTimeout(sidebarSearchDebounceTimer);
+    }
+
+    sidebarSearchDebounceTimer = setTimeout(async () => {
+      const requestId = ++sidebarSearchRequestId;
+      let dataResults = [];
+
+      if (window.AppDataCache && typeof window.AppDataCache.searchGlobal === "function") {
+        try {
+          const response = await window.AppDataCache.searchGlobal(query);
+          const rawResults = Array.isArray(response && response.results) ? response.results : [];
+          dataResults = rawResults.map((item) => ({
+            kind: String(item.kind || "data"),
+            title: String(item.title || "Result"),
+            subtitle: String(item.subtitle || "Data"),
+            owner: String(item.owner || ""),
+            assigned_to_me: item.assigned_to_me !== false,
+            target_page: String(item.target_page || "leads.html")
+          }));
+        } catch (error) {
+          console.error("Sidebar global search failed:", error);
+        }
+      }
+
+      if (requestId !== sidebarSearchRequestId) return;
+      renderSidebarSearchResults(results, query, menuMatches, dataResults, false);
+    }, 240);
+  });
+
+  input.addEventListener("keydown", (event) => {
+    if (event.key === "Escape") {
+      input.value = "";
+      results.hidden = true;
+      results.innerHTML = "";
+      input.blur();
+    }
+  });
+
+  document.addEventListener("click", (event) => {
+    if (!wrapper.contains(event.target)) {
+      results.hidden = true;
+    }
+  });
+}
+
+initSidebarSearch();
+
 const logoutBtn = document.getElementById("logoutBtn");
 if (logoutBtn) {
   logoutBtn.addEventListener("click", () => {

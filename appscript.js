@@ -283,6 +283,128 @@ function outputJSON(data) {
       }
       return outputJSON(followups);
     }
+
+    if (action === "global_search") {
+      const query = String((e.parameter && e.parameter.q) || "").trim().toLowerCase();
+      if (!query) {
+        return outputJSON({ query: "", total: 0, results: [] });
+      }
+
+      const isPrivileged = isManagerOrAdmin(session.role);
+      const results = [];
+      const MAX_RESULTS = 40;
+
+      const leadsSheet = ss.getSheetByName("Leads_Master");
+      const allLeads = mapSheetRows(leadsSheet);
+      allLeads.forEach((lead) => {
+        if (results.length >= MAX_RESULTS) return;
+
+        const owner = String(lead["Lead Owner"] || "");
+        const isOwnedByUser = owner === session.username;
+        const leadId = String(lead["Lead ID"] || "");
+        const customer = String(lead["Customer Name"] || "");
+        const contact = String(lead["Contact No."] || "");
+        const email = String(lead["Email ID"] || "");
+        const source = String(lead["Lead Source"] || "");
+        const status = String(lead["Status"] || "");
+
+        const searchable = [leadId, customer, contact, email, source, status, owner].join(" ").toLowerCase();
+        if (searchable.indexOf(query) === -1) return;
+
+        if (!isPrivileged && !isOwnedByUser) {
+          results.push({
+            kind: "lead",
+            title: leadId || "Lead",
+            subtitle: customer || "Assigned lead",
+            owner: owner || "Unassigned",
+            assigned_to_me: false,
+            access: "restricted",
+            target_page: "leads.html"
+          });
+          return;
+        }
+
+        results.push({
+          kind: "lead",
+          title: leadId || "Lead",
+          subtitle: customer || "Lead",
+          owner: owner || "Unassigned",
+          assigned_to_me: isOwnedByUser,
+          status: status,
+          contact: contact,
+          target_page: "leads.html"
+        });
+      });
+
+      if (results.length < MAX_RESULTS) {
+        const followupSheet = ss.getSheetByName("Followups");
+        const allFollowups = mapSheetRows(followupSheet);
+        allFollowups.forEach((item) => {
+          if (results.length >= MAX_RESULTS) return;
+
+          const createdBy = String(item["Created By"] || "");
+          const isOwnedByUser = createdBy === session.username;
+          const leadId = String(item["Lead ID"] || "");
+          const notes = String(item["Remarks"] || item["Notes"] || "");
+          const nextDate = String(item["Next Follow-up Date"] || "");
+          const status = String(item["Status"] || "");
+
+          const searchable = [leadId, notes, nextDate, status, createdBy].join(" ").toLowerCase();
+          if (searchable.indexOf(query) === -1) return;
+
+          if (!isPrivileged && !isOwnedByUser) {
+            results.push({
+              kind: "followup",
+              title: leadId || "Follow-up",
+              subtitle: "Not assigned to you",
+              owner: createdBy || "Unknown",
+              assigned_to_me: false,
+              access: "restricted",
+              target_page: "followups.html"
+            });
+            return;
+          }
+
+          results.push({
+            kind: "followup",
+            title: leadId || "Follow-up",
+            subtitle: status || "Follow-up",
+            owner: createdBy || "Unknown",
+            assigned_to_me: isOwnedByUser,
+            target_page: "followups.html"
+          });
+        });
+      }
+
+      if (results.length < MAX_RESULTS) {
+        const masterSheet = ss.getSheetByName("Master_Data");
+        const masterRows = mapSheetRows(masterSheet);
+        masterRows.forEach((row) => {
+          if (results.length >= MAX_RESULTS) return;
+
+          const source = String(row["Lead Source"] || "");
+          const category = String(row["Product Category"] || "");
+          const model = String(row["Product Model"] || row["Product Model No"] || "");
+          const searchable = [source, category, model].join(" ").toLowerCase();
+          if (searchable.indexOf(query) === -1) return;
+
+          results.push({
+            kind: "master",
+            title: category || source || "Master Data",
+            subtitle: [source, model].filter(Boolean).join(" - ") || "Reference data",
+            owner: "Shared",
+            assigned_to_me: true,
+            target_page: "reports.html"
+          });
+        });
+      }
+
+      return outputJSON({
+        query: query,
+        total: results.length,
+        results: results
+      });
+    }
   
     // 🔥 DEFAULT = LEADS
     const sheet = ss.getSheetByName("Leads_Master");

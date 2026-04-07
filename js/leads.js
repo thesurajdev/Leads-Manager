@@ -13,9 +13,19 @@ const sourceFilter = document.getElementById("sourceFilter");
 const productFilter = document.getElementById("productFilter");
 const leadInsights = document.getElementById("leadInsights");
 let filtersBound = false;
+let sidebarSearchPrefill = "";
 
 if (!loggedInUser || !userRole) {
   window.location.href = "login.html";
+}
+
+try {
+  sidebarSearchPrefill = String(sessionStorage.getItem("lm_sidebar_search_query") || "").trim();
+  if (sidebarSearchPrefill) {
+    sessionStorage.removeItem("lm_sidebar_search_query");
+  }
+} catch (error) {
+  sidebarSearchPrefill = "";
 }
 
 loadLeads();
@@ -78,7 +88,7 @@ function applyLeadsData(rawLeads) {
     leads = leads.filter((lead) => lead.lead_owner === loggedInUser);
   }
 
-  const previousSearch = searchInput.value;
+  const previousSearch = searchInput.value || sidebarSearchPrefill;
   const previousStatus = statusFilter.value;
   const previousSource = sourceFilter.value;
   const previousProduct = productFilter.value;
@@ -90,6 +100,7 @@ function applyLeadsData(rawLeads) {
   sourceFilter.value = previousSource;
   productFilter.value = previousProduct;
   searchInput.value = previousSearch;
+  sidebarSearchPrefill = "";
   applyFilters();
   attachFilterEvents();
 }
@@ -209,7 +220,12 @@ function applyFilters() {
       lead.customer_name.toLowerCase().includes(searchValue) ||
       lead.contact_no.toLowerCase().includes(searchValue) ||
       lead.email.toLowerCase().includes(searchValue) ||
-      lead.lead_id.toLowerCase().includes(searchValue);
+      lead.lead_id.toLowerCase().includes(searchValue) ||
+      lead.lead_owner.toLowerCase().includes(searchValue) ||
+      lead.status.toLowerCase().includes(searchValue) ||
+      lead.lead_source.toLowerCase().includes(searchValue) ||
+      lead.product_category.toLowerCase().includes(searchValue) ||
+      lead.remarks.toLowerCase().includes(searchValue);
 
     const matchesStatus = !selectedStatus || lead.status === selectedStatus;
     const matchesSource = !selectedSource || lead.lead_source === selectedSource;

@@ -309,10 +309,35 @@ window.AppDataCache = (() => {
 		});
 	}
 
+	async function searchGlobal(query) {
+		const session = window.AuthSession ? window.AuthSession.get() : null;
+		if (!session || !session.token) {
+			throw new Error("Missing or expired session");
+		}
+
+		const q = String(query || "").trim();
+		if (!q) {
+			return { query: "", total: 0, results: [] };
+		}
+
+		const url = `${API_URL}?action=global_search&q=${encodeURIComponent(q)}&auth_token=${encodeURIComponent(session.token)}`;
+		const response = await fetch(url, { cache: "no-store" });
+		const data = await response.json();
+
+		if (data && data.unauthorized) {
+			if (window.AuthSession) window.AuthSession.clear();
+			window.location.href = "login.html";
+			throw new Error("Unauthorized session");
+		}
+
+		return data;
+	}
+
 	return {
 		getResource,
 		prefetch,
 		invalidate,
-		getMeta
+		getMeta,
+		searchGlobal
 	};
 })();
