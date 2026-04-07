@@ -392,6 +392,9 @@ form.addEventListener("submit", async function (e) {
   saveLeadBtn.disabled = true;
   saveLeadBtn.innerText = isEditMode ? "Updating..." : "Saving...";
 
+  // Yield to browser so the button state paints before validation + fetch work begins.
+  await new Promise((resolve) => setTimeout(resolve, 0));
+
   const customer_name = document.getElementById("customer_name").value.trim();
   const contact_no = document.getElementById("contact_no").value.trim();
   const email = document.getElementById("email").value.trim();

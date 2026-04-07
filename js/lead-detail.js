@@ -607,6 +607,9 @@ followupForm.addEventListener("submit", async function (e) {
     submitBtn.textContent = "Saving...";
   }
 
+  // Yield to browser so the button state paints before validation + fetch work begins.
+  await new Promise((resolve) => setTimeout(resolve, 0));
+
   if (!lead) {
     resetSubmitState();
     return;
