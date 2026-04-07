@@ -98,9 +98,6 @@ window.apiPost = async function apiPost(payload) {
 
 	const response = await fetch(API_URL, {
 		method: "POST",
-		headers: {
-			"Content-Type": "application/json"
-		},
 		cache: "no-store",
 		body: JSON.stringify(body)
 	});
