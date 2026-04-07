@@ -1,4 +1,4 @@
-const API_URL = "https://script.google.com/macros/s/AKfycbyoKk0eoLUfNaTEOrCWm9GmGjCG9ykU_Dvz3SG9aXzij9v-_uencXJuDrJuWI_E4QX9/exec";
+const API_URL = "https://script.google.com/macros/s/AKfycbzH7_8ZRe_z3qMiIrJiGLOF5kKyif3XD1wIB2gVdJnh9mELQzCpKKvoc7aTIDANqWGB/exec";
 /*const Deployment_ID = "AKfycbyaTkDRx7dejPy2KvAv599ItfZunT4q54p-2TZLqgm6J9yvu4wN_fJ3evzWvrPNGzXM";*/
 
 window.AppTime = (() => {
