@@ -184,6 +184,8 @@ function loadFollowupStatusOptions(rows) {
   followupStatusSelect.innerHTML = statuses
     .map((status) => `<option value="${escapeHtml(status)}">${escapeHtml(status)}</option>`)
     .join("");
+
+  renderConditionalFields(followupStatusSelect.value);
 }
 
 function createConditionalFieldMarkup(field) {
@@ -387,10 +389,6 @@ async function loadLeadAndFollowups() {
     }
 
     renderLeadDetail();
-
-    if (followupStatusSelect) {
-      renderConditionalFields(followupStatusSelect.value);
-    }
 
     if (lead.lead_status !== "Open") {
       followupForm.style.display = "none";
