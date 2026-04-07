@@ -814,15 +814,18 @@ table tbody tr:hover {
 .sidebar-nav {
   display: grid;
   gap: 8px;
+  align-content: start;
+  margin-top: 6px;
 }
 
 .sidebar-nav a {
   display: flex;
   align-items: center;
   gap: 12px;
+  min-height: 50px;
   padding: 14px 16px;
   border-radius: 16px;
-  color: rgba(240, 246, 252, 0.74);
+  color: rgba(240, 246, 252, 0.9);
   font-size: 14px;
   font-weight: 700;
   text-decoration: none;
@@ -859,6 +862,7 @@ table tbody tr:hover {
   display: grid;
   gap: 14px;
   margin-top: 28px;
+  align-content: end;
 }
 
 .logout-btn {
@@ -883,6 +887,7 @@ table tbody tr:hover {
 .shell-credit a {
   color: rgba(240, 246, 252, 0.72);
   font-size: 12px;
+  word-break: break-word;
 }
 
 .shell-credit a {
@@ -905,14 +910,18 @@ table tbody tr:hover {
   margin: 0 auto;
 }
 
+.page-content .container-wide {
+  width: 100%;
+  max-width: none;
+}
+
 body.sidebar-collapsed .sidebar {
   width: 96px;
   padding-inline: 12px;
 }
 
 body.sidebar-collapsed .sidebar-logo h2,
-body.sidebar-collapsed .sidebar-footer .shell-credit,
-body.sidebar-collapsed .sidebar-nav a {
+body.sidebar-collapsed .sidebar-footer .shell-credit {
   font-size: 0;
 }
 
@@ -922,6 +931,8 @@ body.sidebar-collapsed .sidebar-mini {
 
 body.sidebar-collapsed .sidebar-nav a {
   justify-content: center;
+  gap: 0;
+  color: transparent;
   padding-inline: 10px;
 }
 
