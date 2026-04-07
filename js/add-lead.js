@@ -469,7 +469,8 @@ form.addEventListener("submit", async function (e) {
     }
 
     // 🔥 ADD NEW MODE
-    const existingLeadsRaw = await window.AppDataCache.getResource("leads");
+    const existingLeadsRes = await fetch(API_URL);
+    const existingLeadsRaw = await existingLeadsRes.json();
 
     const existingLeads = existingLeadsRaw.map((lead) => ({
       lead_id: String(lead["Lead ID"] || ""),
