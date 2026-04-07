@@ -113,6 +113,37 @@ Update this value if you deploy a different Apps Script backend.
 - Remarks are required and length-validated.
 - Next follow-up date is required unless the status is `Won` or `Lost`.
 - Next follow-up date cannot be earlier than the follow-up date.
+- Additional follow-up fields are rendered dynamically from `Master_Data` based on selected follow-up status.
+
+#### Master_Data Conditional Follow-up Configuration
+
+Add rows in `Master_Data` where `Type` contains both words `Follow` and `Condition`.
+
+If your sheet currently has only `Type` and `Value` (already used by the app), you can keep that structure. Use one row per status like:
+
+- `Type`: `Followup Condition: Won`
+- `Value`: `Order Value | Partner Name | State | Invoice Link`
+
+- `Type`: `Followup Condition: Lost`
+- `Value`: `Lost Reason`
+
+Supported row formats:
+
+1. Detailed row format (recommended):
+	- `Type`: `Followup Condition`
+	- `Status`: target follow-up status (example: `Won`, `Lost`)
+	- `Field Label`: field name to render (example: `Order Value`, `Partner Name`)
+	- Optional: `Field Type` (`text`, `number`, `url`, `date`, `select`, `textarea`)
+	- Optional: `Required` (`Yes`/`No`)
+	- Optional: `Options` (for `select`, separated by `|` or `,`)
+	- Optional: `Placeholder`
+
+2. Compact row format:
+	- `Type`: `Followup Condition`
+	- `Status`: target follow-up status
+	- `Value`: pipe/comma separated list of field labels
+
+If a conditional field name matches a header in `Followups` or `Leads_Master`, values are saved into that column automatically. If no matching `Followups` header exists, values are stored as JSON when a column like `Additional Data`, `Additional Fields`, `Dynamic Fields`, or `Conditional Fields` is present.
 
 ## Role Behavior
 

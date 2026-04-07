@@ -3,6 +3,15 @@ function outputJSON(data) {
       .createTextOutput(JSON.stringify(data))
       .setMimeType(ContentService.MimeType.JSON);
   }
+
+  function normalizeHeader(value) {
+    return String(value || "")
+      .trim()
+      .toLowerCase()
+      .replace(/[^a-z0-9]+/g, " ")
+      .replace(/\s+/g, " ")
+      .trim();
+  }
   
   function doGet(e) {
     const action = e.parameter.action || "leads";
@@ -183,40 +192,140 @@ function outputJSON(data) {
       // 🔥 FOLLOW-UP SAVE + LEAD UPDATE
       if (data.type === "followup") {
         const followSheet = ss.getSheetByName("Followups");
-  
-        followSheet.appendRow([
-          data.followup_id || "",
-          data.lead_id || "",
-          data.customer_name || "",
-          data.contact_no || "",
-          data.followup_date || "",
-          data.followup_type || "",
-          data.followup_status || "",
-          data.remarks || "",
-          data.next_followup_date || "",
-          data.created_by || "",
-          data.created_timestamp || ""
-        ]);
+
+        const followHeaders = followSheet.getRange(1, 1, 1, followSheet.getLastColumn()).getValues()[0];
+        const followHeaderIndex = {};
+        followHeaders.forEach((header, index) => {
+          followHeaderIndex[normalizeHeader(header)] = index;
+        });
+
+        const followupBaseValues = {
+          "Followup ID": data.followup_id || "",
+          "Lead ID": data.lead_id || "",
+          "Customer Name": data.customer_name || "",
+          "Contact No.": data.contact_no || "",
+          "Follow-up Date": data.followup_date || "",
+          "Follow-up Type": data.followup_type || "",
+          "Follow-up Status": data.followup_status || "",
+          "Remarks": data.remarks || "",
+          "Next Follow-up Date": data.next_followup_date || "",
+          "Created By": data.created_by || "",
+          "Created Timestamp": data.created_timestamp || ""
+        };
+
+        const newFollowupRow = new Array(followHeaders.length).fill("");
+        Object.keys(followupBaseValues).forEach((header) => {
+          const columnIndex = followHeaderIndex[normalizeHeader(header)];
+          if (columnIndex !== undefined) {
+            newFollowupRow[columnIndex] = followupBaseValues[header];
+          }
+        });
+
+        const conditionalFields =
+          data.conditional_fields && typeof data.conditional_fields === "object"
+            ? data.conditional_fields
+            : {};
+        const unresolvedConditionalFields = {};
+
+        Object.keys(conditionalFields).forEach((fieldName) => {
+          const value = conditionalFields[fieldName];
+          const columnIndex = followHeaderIndex[normalizeHeader(fieldName)];
+
+          if (columnIndex !== undefined) {
+            newFollowupRow[columnIndex] = value;
+          } else {
+            unresolvedConditionalFields[fieldName] = value;
+          }
+        });
+
+        const extraDataColumnIndex =
+          followHeaderIndex["additional data"] !== undefined
+            ? followHeaderIndex["additional data"]
+            : followHeaderIndex["additional fields"] !== undefined
+              ? followHeaderIndex["additional fields"]
+              : followHeaderIndex["dynamic fields"] !== undefined
+                ? followHeaderIndex["dynamic fields"]
+                : followHeaderIndex["conditional fields"];
+
+        if (
+          extraDataColumnIndex !== undefined &&
+          Object.keys(unresolvedConditionalFields).length > 0
+        ) {
+          newFollowupRow[extraDataColumnIndex] = JSON.stringify(unresolvedConditionalFields);
+        }
+
+        followSheet.appendRow(newFollowupRow);
   
         // ALSO UPDATE LEADS_MASTER
         const leadSheet = ss.getSheetByName("Leads_Master");
         const leadData = leadSheet.getDataRange().getValues();
-  
+        const leadHeaders = leadData[0] || [];
+        const leadHeaderIndex = {};
+        leadHeaders.forEach((header, index) => {
+          leadHeaderIndex[normalizeHeader(header)] = index;
+        });
+
+        const leadIdColumn =
+          leadHeaderIndex["lead id"] !== undefined
+            ? leadHeaderIndex["lead id"]
+            : 0;
+        const statusColumn = leadHeaderIndex["status"];
+        const remarksColumn = leadHeaderIndex["remarks"];
+        const leadStatusColumn = leadHeaderIndex["lead status"];
+        const nextFollowupColumn = leadHeaderIndex["next follow up date"];
+        const orderValueColumn =
+          leadHeaderIndex["order value"] !== undefined
+            ? leadHeaderIndex["order value"]
+            : leadHeaderIndex["order value inr"];
+
         for (let i = 1; i < leadData.length; i++) {
-          if (String(leadData[i][0]) === String(data.lead_id)) {
-            leadSheet.getRange(i + 1, 9).setValue(data.followup_status || "");
-            leadSheet.getRange(i + 1, 10).setValue(data.remarks || "");
-  
-            const finalLeadStatus =
-              data.followup_status === "Won" || data.followup_status === "Lost"
-                ? "Closed"
-                : "Open";
-  
-            leadSheet.getRange(i + 1, 11).setValue(finalLeadStatus);
-            leadSheet.getRange(i + 1, 13).setValue(data.next_followup_date || "");
-  
-            break;
+          if (String(leadData[i][leadIdColumn]) !== String(data.lead_id)) {
+            continue;
           }
+
+          const updatedRow = leadData[i].slice();
+
+          if (statusColumn !== undefined) {
+            updatedRow[statusColumn] = data.followup_status || "";
+          }
+
+          if (remarksColumn !== undefined) {
+            updatedRow[remarksColumn] = data.remarks || "";
+          }
+
+          const finalLeadStatus =
+            data.followup_status === "Won" || data.followup_status === "Lost"
+              ? "Closed"
+              : "Open";
+
+          if (leadStatusColumn !== undefined) {
+            updatedRow[leadStatusColumn] = finalLeadStatus;
+          }
+
+          if (nextFollowupColumn !== undefined) {
+            updatedRow[nextFollowupColumn] = data.next_followup_date || "";
+          }
+
+          Object.keys(conditionalFields).forEach((fieldName) => {
+            const mappedColumn = leadHeaderIndex[normalizeHeader(fieldName)];
+            if (mappedColumn !== undefined) {
+              updatedRow[mappedColumn] = conditionalFields[fieldName];
+            }
+          });
+
+          if (orderValueColumn !== undefined) {
+            const conditionalOrderValue =
+              conditionalFields["Order Value"] ||
+              conditionalFields["Order value"] ||
+              conditionalFields["order value"];
+
+            if (conditionalOrderValue !== undefined && conditionalOrderValue !== "") {
+              updatedRow[orderValueColumn] = conditionalOrderValue;
+            }
+          }
+
+          leadSheet.getRange(i + 1, 1, 1, updatedRow.length).setValues([updatedRow]);
+          break;
         }
   
         return outputJSON({

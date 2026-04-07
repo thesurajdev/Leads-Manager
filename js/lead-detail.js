@@ -7,6 +7,8 @@ const followupForm = document.getElementById("followupForm");
 const followupTableBody = document.getElementById("followupTableBody");
 const timelineBox = document.getElementById("leadTimeline");
 const leadSummaryStrip = document.getElementById("leadSummaryStrip");
+const followupStatusSelect = document.getElementById("followup_status");
+const conditionalFollowupFields = document.getElementById("conditionalFollowupFields");
 
 const loggedInUser = localStorage.getItem("loggedInUser");
 const userRole = localStorage.getItem("userRole");
@@ -16,8 +18,301 @@ if (!loggedInUser || !userRole) {
 }
 
 let lead = null;
+let masterDataRows = [];
+let conditionalFieldsByStatus = {};
+let activeConditionalFields = [];
 
 loadLeadAndFollowups();
+
+function normalizeKey(value) {
+  return String(value || "")
+    .trim()
+    .toLowerCase()
+    .replace(/[^a-z0-9]+/g, "_")
+    .replace(/^_+|_+$/g, "");
+}
+
+function escapeHtml(value) {
+  return String(value || "")
+    .replace(/&/g, "&amp;")
+    .replace(/</g, "&lt;")
+    .replace(/>/g, "&gt;")
+    .replace(/"/g, "&quot;")
+    .replace(/'/g, "&#39;");
+}
+
+function parseBoolean(value) {
+  const normalized = String(value || "").trim().toLowerCase();
+  return ["true", "yes", "1", "required", "y"].includes(normalized);
+}
+
+function parseOptionList(value) {
+  return String(value || "")
+    .split(/[|,]/)
+    .map((option) => option.trim())
+    .filter(Boolean);
+}
+
+function deriveStatusFromType(typeValue) {
+  const rawType = String(typeValue || "").trim();
+  if (!rawType) return "";
+
+  const normalizedType = rawType.toLowerCase();
+
+  if (!normalizedType.includes("follow") || !normalizedType.includes("condition")) {
+    return "";
+  }
+
+  const delimiterMatch = rawType.match(/follow\s*-?\s*up\s*condition\s*[:|-]\s*(.+)$/i);
+  if (delimiterMatch && delimiterMatch[1]) {
+    return delimiterMatch[1].trim();
+  }
+
+  const trailingMatch = rawType.match(/follow\s*-?\s*up\s*condition\s+(.+)$/i);
+  if (trailingMatch && trailingMatch[1]) {
+    return trailingMatch[1].trim();
+  }
+
+  return "";
+}
+
+function parseConditionalConfigRow(item) {
+  const status = String(
+    item["Status"] ||
+    item["Follow-up Status"] ||
+    item["Followup Status"] ||
+    deriveStatusFromType(item["Type"]) ||
+    ""
+  ).trim();
+  const explicitFieldLabel = String(item["Field Label"] || item["Label"] || item["Field"] || "").trim();
+  const fieldLabel = explicitFieldLabel;
+
+  if (!status || !fieldLabel) return null;
+
+  const fieldTypeRaw = String(item["Field Type"] || item["Input Type"] || item["Control Type"] || "text").trim().toLowerCase();
+  const allowedTypes = ["text", "number", "url", "date", "select", "textarea"];
+  const fieldType = allowedTypes.includes(fieldTypeRaw) ? fieldTypeRaw : "text";
+  const required = parseBoolean(item["Required"] || item["Is Required"] || "");
+  const placeholder = String(item["Placeholder"] || "").trim();
+  const options = parseOptionList(item["Options"] || item["Option List"] || "");
+
+  return {
+    status,
+    name: fieldLabel,
+    key: normalizeKey(fieldLabel),
+    label: fieldLabel,
+    type: fieldType,
+    required,
+    placeholder,
+    options
+  };
+}
+
+function extractConditionalConfigFromMaster(rows) {
+  const byStatus = {};
+
+  rows.forEach((item) => {
+    const type = String(item["Type"] || "").trim().toLowerCase();
+
+    if (!type.includes("follow") || !type.includes("condition")) {
+      return;
+    }
+
+    const parsedRow = parseConditionalConfigRow(item);
+    if (parsedRow) {
+      if (!byStatus[parsedRow.status]) {
+        byStatus[parsedRow.status] = [];
+      }
+      byStatus[parsedRow.status].push(parsedRow);
+      return;
+    }
+
+    const status = String(
+      item["Status"] ||
+      item["Follow-up Status"] ||
+      item["Followup Status"] ||
+      deriveStatusFromType(item["Type"]) ||
+      ""
+    ).trim();
+    const value = String(item["Value"] || "").trim();
+
+    if (!status || !value) return;
+
+    const compactList = value
+      .split(/[|,]/)
+      .map((part) => part.trim())
+      .filter(Boolean);
+
+    if (!compactList.length) return;
+
+    byStatus[status] = compactList.map((fieldLabel) => ({
+      name: fieldLabel,
+      key: normalizeKey(fieldLabel),
+      label: fieldLabel,
+      type: "text",
+      required: true,
+      placeholder: "",
+      options: []
+    }));
+  });
+
+  const normalized = {};
+  Object.keys(byStatus).forEach((status) => {
+    const dedupe = new Map();
+    byStatus[status].forEach((field) => {
+      if (!field || !field.key) return;
+      if (!dedupe.has(field.key)) {
+        dedupe.set(field.key, field);
+      }
+    });
+    normalized[status] = Array.from(dedupe.values());
+  });
+
+  return normalized;
+}
+
+function loadFollowupStatusOptions(rows) {
+  if (!followupStatusSelect) return;
+
+  const statuses = rows
+    .filter((item) => String(item["Type"] || "").trim().toLowerCase() === "status")
+    .map((item) => String(item["Value"] || "").trim())
+    .filter(Boolean);
+
+  if (!statuses.length) return;
+
+  followupStatusSelect.innerHTML = statuses
+    .map((status) => `<option value="${escapeHtml(status)}">${escapeHtml(status)}</option>`)
+    .join("");
+}
+
+function createConditionalFieldMarkup(field) {
+  const requiredAttr = field.required ? "required" : "";
+  const requiredMark = field.required ? " *" : "";
+  const placeholderAttr = field.placeholder ? `placeholder="${escapeHtml(field.placeholder)}"` : "";
+  const id = `cf_${field.key}`;
+
+  if (field.type === "textarea") {
+    return `
+      <div>
+        <label for="${id}">${escapeHtml(field.label)}${requiredMark}</label>
+        <textarea id="${id}" data-cf-key="${field.key}" data-cf-name="${escapeHtml(field.name)}" ${requiredAttr} ${placeholderAttr}></textarea>
+      </div>
+    `;
+  }
+
+  if (field.type === "select") {
+    const optionsMarkup = field.options
+      .map((option) => `<option value="${escapeHtml(option)}">${escapeHtml(option)}</option>`)
+      .join("");
+
+    return `
+      <div>
+        <label for="${id}">${escapeHtml(field.label)}${requiredMark}</label>
+        <select id="${id}" data-cf-key="${field.key}" data-cf-name="${escapeHtml(field.name)}" ${requiredAttr}>
+          <option value="">Select ${escapeHtml(field.label)}</option>
+          ${optionsMarkup}
+        </select>
+      </div>
+    `;
+  }
+
+  return `
+    <div>
+      <label for="${id}">${escapeHtml(field.label)}${requiredMark}</label>
+      <input type="${field.type}" id="${id}" data-cf-key="${field.key}" data-cf-name="${escapeHtml(field.name)}" ${requiredAttr} ${placeholderAttr} />
+    </div>
+  `;
+}
+
+function renderConditionalFields(status) {
+  if (!conditionalFollowupFields) return;
+
+  activeConditionalFields = conditionalFieldsByStatus[status] || [];
+
+  if (!activeConditionalFields.length) {
+    conditionalFollowupFields.innerHTML = "";
+    return;
+  }
+
+  const fieldsMarkup = activeConditionalFields
+    .map((field) => createConditionalFieldMarkup(field))
+    .join("");
+
+  conditionalFollowupFields.innerHTML = `
+    <div class="profile-section">
+      <h3 class="profile-section-title">Additional details for ${escapeHtml(status)}</h3>
+      <div class="form-grid">
+        ${fieldsMarkup}
+      </div>
+    </div>
+  `;
+}
+
+function collectConditionalFieldValues() {
+  const values = {};
+  const fields = conditionalFollowupFields
+    ? conditionalFollowupFields.querySelectorAll("[data-cf-key]")
+    : [];
+
+  fields.forEach((element) => {
+    const key = element.getAttribute("data-cf-key");
+    const originalName = element.getAttribute("data-cf-name") || key;
+    const value = String(element.value || "").trim();
+
+    if (!key) return;
+    if (!value) return;
+
+    values[originalName] = value;
+  });
+
+  return values;
+}
+
+function validateConditionalFieldValues() {
+  const errors = [];
+  const fields = conditionalFollowupFields
+    ? conditionalFollowupFields.querySelectorAll("[data-cf-key]")
+    : [];
+
+  fields.forEach((element) => {
+    const label = element.getAttribute("data-cf-name") || "Field";
+    const value = String(element.value || "").trim();
+    const required = element.hasAttribute("required");
+    const type = element.getAttribute("type") || element.tagName.toLowerCase();
+
+    let invalid = false;
+
+    if (required && !value) {
+      errors.push(`${label} is required.`);
+      invalid = true;
+    }
+
+    if (!invalid && value && type === "number" && isNaN(Number(value))) {
+      errors.push(`${label} must be a valid number.`);
+      invalid = true;
+    }
+
+    if (!invalid && value && type === "url") {
+      try {
+        new URL(value);
+      } catch (_error) {
+        errors.push(`${label} must be a valid URL.`);
+        invalid = true;
+      }
+    }
+
+    element.classList.toggle("is-invalid", invalid);
+  });
+
+  return errors;
+}
+
+if (followupStatusSelect) {
+  followupStatusSelect.addEventListener("change", () => {
+    renderConditionalFields(followupStatusSelect.value);
+  });
+}
 
 function showLeadDetailLoadingState() {
   if (leadSummaryStrip) {
@@ -46,8 +341,16 @@ async function loadLeadAndFollowups() {
   showLeadDetailLoadingState();
 
   try {
-    const leadsRes = await fetch(API_URL);
+    const [leadsRes, masterRes] = await Promise.all([
+      fetch(API_URL),
+      fetch(API_URL + "?action=master")
+    ]);
     const leadsRaw = await leadsRes.json();
+    const masterRaw = await masterRes.json();
+
+    masterDataRows = Array.isArray(masterRaw) ? masterRaw : [];
+    conditionalFieldsByStatus = extractConditionalConfigFromMaster(masterDataRows);
+    loadFollowupStatusOptions(masterDataRows);
 
     leads = leadsRaw.map((item, index) => ({
       id: index + 1,
@@ -84,6 +387,10 @@ async function loadLeadAndFollowups() {
     }
 
     renderLeadDetail();
+
+    if (followupStatusSelect) {
+      renderConditionalFields(followupStatusSelect.value);
+    }
 
     if (lead.lead_status !== "Open") {
       followupForm.style.display = "none";
@@ -318,6 +625,8 @@ followupForm.addEventListener("submit", async function (e) {
   const followup_status = document.getElementById("followup_status").value;
   const remarks = document.getElementById("followup_remarks").value.trim();
   const next_followup_date = document.getElementById("next_followup_date").value;
+  const conditionalFieldErrors = validateConditionalFieldValues();
+  const conditionalFieldValues = collectConditionalFieldValues();
 
   const validationErrors = [];
   const today = new Date();
@@ -351,6 +660,8 @@ followupForm.addEventListener("submit", async function (e) {
     validationErrors.push("Next Follow-up Date cannot be earlier than Follow-up Date.");
   }
 
+  validationErrors.push(...conditionalFieldErrors);
+
   document.getElementById("followup_date").classList.toggle(
     "is-invalid",
     !followup_date || new Date(followup_date) > today
@@ -381,6 +692,7 @@ followupForm.addEventListener("submit", async function (e) {
     followup_status,
     remarks,
     next_followup_date,
+    conditional_fields: conditionalFieldValues,
     created_by: loggedInUser,
     created_role: userRole,
     created_timestamp: new Date().toLocaleString()
