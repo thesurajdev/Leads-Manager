@@ -56,21 +56,6 @@ try {
   // ignore
 }
 
-try {
-  const sidebar = document.querySelector(".sidebar");
-  if (sidebar && !document.getElementById("sidebarCloseBtn")) {
-    const closeBtn = document.createElement("button");
-    closeBtn.id = "sidebarCloseBtn";
-    closeBtn.className = "sidebar-close-btn";
-    closeBtn.type = "button";
-    closeBtn.setAttribute("aria-label", "Close sidebar");
-    closeBtn.textContent = "×";
-    sidebar.insertBefore(closeBtn, sidebar.firstChild);
-  }
-} catch (e) {
-  // ignore
-}
-
 function showGlobalAppError(message) {
   try {
     const host =
@@ -117,30 +102,7 @@ window.addEventListener("unhandledrejection", (event) => {
   showGlobalAppError(msg);
 });
 
-const SIDEBAR_COLLAPSED_KEY = "sidebarCollapsed";
-
-function setSidebarCollapsed(collapsed) {
-  document.body.classList.toggle("sidebar-collapsed", collapsed);
-  try {
-    localStorage.setItem(SIDEBAR_COLLAPSED_KEY, collapsed ? "1" : "0");
-  } catch (e) {
-    // ignore storage failures
-  }
-}
-
-function getSidebarCollapsed() {
-  try {
-    return localStorage.getItem(SIDEBAR_COLLAPSED_KEY) === "1";
-  } catch (e) {
-    return false;
-  }
-}
-
-function setMobileSidebarOpen(open) {
-  document.body.classList.toggle("sidebar-mobile-open", open);
-}
-
-if (window.innerWidth >= 901) setSidebarCollapsed(getSidebarCollapsed());
+document.body.classList.remove("sidebar-collapsed");
 
 const reportsLink = document.getElementById("reportsLink");
 if (reportsLink && userRole === "Agent") {
@@ -168,42 +130,9 @@ if (logoutBtn) {
   });
 }
 
-const sidebarToggle = document.getElementById("sidebarToggle");
-if (sidebarToggle) {
-  sidebarToggle.addEventListener("click", () => {
-    if (window.innerWidth <= 900) {
-      const isOpen = document.body.classList.contains("sidebar-mobile-open");
-      setMobileSidebarOpen(!isOpen);
-      return;
-    }
-
-    const isCollapsed = document.body.classList.contains("sidebar-collapsed");
-    setSidebarCollapsed(!isCollapsed);
-  });
-}
-
-window.addEventListener("resize", () => {
-  if (window.innerWidth >= 901) {
-    setMobileSidebarOpen(false);
-    setSidebarCollapsed(getSidebarCollapsed());
-  } else {
-    document.body.classList.remove("sidebar-collapsed");
-  }
-});
-
-const sidebarBackdrop = document.getElementById("sidebarBackdrop");
-if (sidebarBackdrop) {
-  sidebarBackdrop.addEventListener("click", () => setMobileSidebarOpen(false));
-}
-
-const sidebarCloseBtn = document.getElementById("sidebarCloseBtn");
-if (sidebarCloseBtn) {
-  sidebarCloseBtn.addEventListener("click", () => setMobileSidebarOpen(false));
-}
-
 document.querySelectorAll(".sidebar-nav a[href]").forEach((a) => {
   a.addEventListener("click", () => {
-    if (window.innerWidth <= 900) setMobileSidebarOpen(false);
+    // Sidebar is fixed/open by design.
   });
 });
 })();
