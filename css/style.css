@@ -854,7 +854,10 @@ table tbody tr:hover {
 }
 
 .sidebar-nav a::before {
-  content: attr(data-icon);
+  content: none;
+}
+
+.sidebar-nav a .nav-icon {
   display: inline-flex;
   align-items: center;
   justify-content: center;
@@ -863,8 +866,13 @@ table tbody tr:hover {
   border-radius: 12px;
   background: rgba(255, 255, 255, 0.06);
   color: #f8fafc;
-  font-weight: 800;
   flex-shrink: 0;
+  transition: background 0.18s ease, color 0.18s ease, transform 0.18s ease;
+}
+
+.sidebar-nav a .nav-icon svg {
+  width: 18px;
+  height: 18px;
 }
 
 .sidebar-nav a:hover,
@@ -875,7 +883,7 @@ table tbody tr:hover {
   transform: translateX(2px);
 }
 
-.sidebar-nav a.active::before {
+.sidebar-nav a.active .nav-icon {
   background: linear-gradient(135deg, rgba(46, 195, 183, 0.32), rgba(217, 119, 6, 0.34));
 }
 
@@ -957,7 +965,7 @@ body.sidebar-collapsed .sidebar-nav a {
   padding-inline: 10px;
 }
 
-body.sidebar-collapsed .sidebar-nav a::before {
+body.sidebar-collapsed .sidebar-nav a .nav-icon {
   width: 38px;
   height: 38px;
 }

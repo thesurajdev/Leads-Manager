@@ -35,10 +35,75 @@ const topbarUsername = document.getElementById("topbarUsername");
 const topbarRole = document.getElementById("topbarRole");
 const welcomeUser = document.getElementById("welcomeUser");
 
+const sidebarIconMap = {
+  "index.html": `
+    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+      <path d="M3 10.5 12 3l9 7.5" />
+      <path d="M5.25 9.75V21h13.5V9.75" />
+      <path d="M9.75 21v-6h4.5v6" />
+    </svg>
+  `,
+  "dashboard.html": `
+    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+      <rect x="3.5" y="3.5" width="7" height="7" rx="1.5" />
+      <rect x="13.5" y="3.5" width="7" height="11" rx="1.5" />
+      <rect x="3.5" y="13.5" width="7" height="7" rx="1.5" />
+      <rect x="13.5" y="17.5" width="7" height="3" rx="1.5" />
+    </svg>
+  `,
+  "leads.html": `
+    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+      <path d="M4 7.5h16" />
+      <path d="M4 12h16" />
+      <path d="M4 16.5h10" />
+      <circle cx="18" cy="16.5" r="2.5" />
+    </svg>
+  `,
+  "add-lead.html": `
+    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+      <circle cx="12" cy="12" r="8" />
+      <path d="M12 8v8" />
+      <path d="M8 12h8" />
+    </svg>
+  `,
+  "followups.html": `
+    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+      <path d="M20 7v5h-5" />
+      <path d="M4 17v-5h5" />
+      <path d="M6.8 9A7 7 0 0 1 20 12" />
+      <path d="M17.2 15A7 7 0 0 1 4 12" />
+    </svg>
+  `,
+  "reports.html": `
+    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+      <path d="M5 19.5h14" />
+      <path d="M7.5 16V10" />
+      <path d="M12 16V6.5" />
+      <path d="M16.5 16v-4" />
+    </svg>
+  `
+};
+
 if (topbarUsername) topbarUsername.textContent = loggedInUser;
 if (topbarRole) topbarRole.textContent = userRole;
 if (welcomeUser && loggedInUser) {
   welcomeUser.textContent = `Welcome back, ${loggedInUser}. Your pipeline is ready.`;
+}
+
+try {
+  document.querySelectorAll(".sidebar-nav a[href]").forEach((link) => {
+    const href = (link.getAttribute("href") || "").toLowerCase();
+    const svgMarkup = sidebarIconMap[href];
+
+    if (!svgMarkup || link.querySelector(".nav-icon")) return;
+
+    const icon = document.createElement("span");
+    icon.className = "nav-icon";
+    icon.innerHTML = svgMarkup.trim();
+    link.prepend(icon);
+  });
+} catch (e) {
+  // ignore
 }
 
 try {
