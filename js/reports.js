@@ -1,8 +1,9 @@
 let leads = [];
 let reportRows = [];
 
-const loggedInUser = localStorage.getItem("loggedInUser");
-const userRole = localStorage.getItem("userRole");
+const session = window.AuthSession ? window.AuthSession.requireValid() : null;
+const loggedInUser = session ? session.username : "";
+const userRole = session ? session.role : "";
 
 const reportAccessMessage = document.getElementById("reportAccessMessage");
 const reportBuilder = document.getElementById("reportBuilder");

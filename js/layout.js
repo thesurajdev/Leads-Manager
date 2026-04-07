@@ -24,12 +24,11 @@ if (window.location.protocol === "file:") {
   }
 }
 
-const loggedInUser = localStorage.getItem("loggedInUser");
-const userRole = localStorage.getItem("userRole");
+const session = window.AuthSession ? window.AuthSession.requireValid({ redirect: true }) : null;
+if (!session) return;
 
-if (!loggedInUser || !userRole) {
-  window.location.href = "login.html";
-}
+const loggedInUser = session.username;
+const userRole = session.role;
 
 const topbarUsername = document.getElementById("topbarUsername");
 const topbarRole = document.getElementById("topbarRole");
@@ -139,15 +138,27 @@ function showGlobalAppError(message) {
     box.style.border = "1px solid #fecaca";
     box.style.background = "#fff";
     box.style.boxShadow = "0 4px 14px rgba(0,0,0,0.06)";
-    box.innerHTML = `
-      <div style="font-weight:800;color:#dc2626;">App Error</div>
-      <div style="margin-top:6px;color:#374151; font-size:14px; line-height:1.35;">
-        ${String(message || "Something went wrong.")}
-      </div>
-      <div style="margin-top:8px;color:#6b7280; font-size:12px;">
-        Tip: open DevTools Console for details.
-      </div>
-    `;
+    const title = document.createElement("div");
+    title.style.fontWeight = "800";
+    title.style.color = "#dc2626";
+    title.textContent = "App Error";
+
+    const detail = document.createElement("div");
+    detail.style.marginTop = "6px";
+    detail.style.color = "#374151";
+    detail.style.fontSize = "14px";
+    detail.style.lineHeight = "1.35";
+    detail.textContent = String(message || "Something went wrong.");
+
+    const tip = document.createElement("div");
+    tip.style.marginTop = "8px";
+    tip.style.color = "#6b7280";
+    tip.style.fontSize = "12px";
+    tip.textContent = "Tip: open DevTools Console for details.";
+
+    box.appendChild(title);
+    box.appendChild(detail);
+    box.appendChild(tip);
 
     host.prepend(box);
   } catch (e) {
@@ -189,8 +200,12 @@ try {
 const logoutBtn = document.getElementById("logoutBtn");
 if (logoutBtn) {
   logoutBtn.addEventListener("click", () => {
-    localStorage.removeItem("loggedInUser");
-    localStorage.removeItem("userRole");
+    if (window.AuthSession) {
+      window.AuthSession.clear();
+    }
+    if (window.AppDataCache) {
+      window.AppDataCache.invalidate();
+    }
     window.location.href = "login.html";
   });
 }

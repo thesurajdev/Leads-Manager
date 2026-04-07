@@ -43,21 +43,33 @@ form.addEventListener("submit", async function (e) {
   }
 
   try {
-    const res = await fetch(API_URL, {
-      method: "POST",
-      body: JSON.stringify({
-        type: "login",
-        username,
-        password
-      })
+    const result = await window.apiPost({
+      type: "login",
+      username,
+      password
     });
 
-    const result = await res.json();
-
     if (result.success) {
-      localStorage.setItem("loggedInUser", result.username);
-      localStorage.setItem("userRole", result.role);
+      if (!result.auth_token || !result.expires_at) {
+        setLoginError("Invalid server response. Contact administrator.");
+        return;
+      }
+
+      window.AuthSession.set({
+        username: result.username,
+        role: result.role,
+        token: result.auth_token,
+        expiresAt: Number(result.expires_at)
+      });
+
+      if (window.AppDataCache) {
+        window.AppDataCache.invalidate();
+      }
       window.location.href = "dashboard.html";
+    } else if (result.throttled) {
+      setLoginError("Too many failed attempts. Try again in a few minutes.");
+    } else if (result.unauthorized) {
+      setLoginError("Session invalid. Please login again.");
     } else {
       setLoginError("Invalid username or password");
     }

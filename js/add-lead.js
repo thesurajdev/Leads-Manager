@@ -257,8 +257,9 @@ function validateLeadForm() {
   };
 }
 
-const loggedInUser = localStorage.getItem("loggedInUser");
-const userRole = localStorage.getItem("userRole");
+const session = window.AuthSession ? window.AuthSession.requireValid() : null;
+const loggedInUser = session ? session.username : "";
+const userRole = session ? session.role : "";
 const urlParams = new URLSearchParams(window.location.search);
 const editModeRequested = urlParams.get("mode") === "edit";
 
@@ -447,17 +448,10 @@ form.addEventListener("submit", async function (e) {
         product_category,
         status,
         remarks,
-        conditional_fields: conditionalValues,
-        requested_by: loggedInUser,
-        requested_role: userRole
+        conditional_fields: conditionalValues
       };
 
-      const res = await fetch(API_URL, {
-        method: "POST",
-        body: JSON.stringify(updatePayload)
-      });
-
-      const result = await res.json();
+      const result = await window.apiPost(updatePayload);
 
       if (result.success) {
         window.AppDataCache.invalidate(["leads", "followups"]);
@@ -478,8 +472,7 @@ form.addEventListener("submit", async function (e) {
     }
 
     // 🔥 ADD NEW MODE
-    const existingLeadsRes = await fetch(API_URL);
-    const existingLeadsRaw = await existingLeadsRes.json();
+    const existingLeadsRaw = await window.AppDataCache.getResource("leads");
 
     const existingLeads = existingLeadsRaw.map((lead) => ({
       lead_id: String(lead["Lead ID"] || ""),
@@ -535,12 +528,7 @@ form.addEventListener("submit", async function (e) {
       conditional_fields: conditionalValues
     };
 
-    const res = await fetch(API_URL, {
-      method: "POST",
-      body: JSON.stringify(newLead)
-    });
-
-    const result = await res.json();
+    const result = await window.apiPost(newLead);
 
     if (result.success) {
       window.AppDataCache.invalidate(["leads", "followups"]);

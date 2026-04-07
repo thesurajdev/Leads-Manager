@@ -1,6 +1,130 @@
 const API_URL = "https://script.google.com/macros/s/AKfycbwhC2GfiV1iJU8hABEtRUnqVVmd5Rs9saR2B_bA8dX-oxXKgFiiRsdHX1vIG_c1J5av/exec";
 /*const Deployment_ID = "AKfycbyaTkDRx7dejPy2KvAv599ItfZunT4q54p-2TZLqgm6J9yvu4wN_fJ3evzWvrPNGzXM";*/
 
+window.AuthSession = (() => {
+	const SESSION_KEY = "lm_auth_session_v1";
+	const LEGACY_USER_KEY = "loggedInUser";
+	const LEGACY_ROLE_KEY = "userRole";
+
+	function safeRead() {
+		try {
+			const raw = sessionStorage.getItem(SESSION_KEY);
+			if (!raw) return null;
+			const parsed = JSON.parse(raw);
+			if (!parsed || typeof parsed !== "object") return null;
+			return parsed;
+		} catch (_error) {
+			return null;
+		}
+	}
+
+	function safeWrite(session) {
+		try {
+			sessionStorage.setItem(SESSION_KEY, JSON.stringify(session));
+		} catch (_error) {
+			// Ignore private mode quota errors.
+		}
+	}
+
+	function clear() {
+		try {
+			sessionStorage.removeItem(SESSION_KEY);
+		} catch (_error) {
+			// Ignore.
+		}
+
+		// Clean up old auth storage keys.
+		try {
+			localStorage.removeItem(LEGACY_USER_KEY);
+			localStorage.removeItem(LEGACY_ROLE_KEY);
+		} catch (_error) {
+			// Ignore.
+		}
+	}
+
+	function isExpired(session) {
+		if (!session || !session.expiresAt) return true;
+		return Number(session.expiresAt) <= Date.now();
+	}
+
+	function get() {
+		const session = safeRead();
+		if (!session || isExpired(session)) {
+			clear();
+			return null;
+		}
+		return session;
+	}
+
+	function set(session) {
+		safeWrite({
+			username: String(session && session.username ? session.username : ""),
+			role: String(session && session.role ? session.role : ""),
+			token: String(session && session.token ? session.token : ""),
+			expiresAt: Number(session && session.expiresAt ? session.expiresAt : 0)
+		});
+	}
+
+	function requireValid(options = {}) {
+		const session = get();
+		if (session) return session;
+		if (options.redirect !== false) {
+			window.location.href = "login.html";
+		}
+		return null;
+	}
+
+	return {
+		get,
+		set,
+		clear,
+		requireValid
+	};
+})();
+
+window.apiPost = async function apiPost(payload) {
+	const body = payload && typeof payload === "object" ? { ...payload } : {};
+	const isLogin = body.type === "login";
+	const session = window.AuthSession ? window.AuthSession.get() : null;
+
+	if (!isLogin) {
+		if (!session || !session.token) {
+			if (window.AuthSession) window.AuthSession.clear();
+			window.location.href = "login.html";
+			throw new Error("Missing or expired session");
+		}
+		body.auth_token = session.token;
+	}
+
+	const response = await fetch(API_URL, {
+		method: "POST",
+		headers: {
+			"Content-Type": "application/json"
+		},
+		cache: "no-store",
+		body: JSON.stringify(body)
+	});
+
+	let data;
+	try {
+		data = await response.json();
+	} catch (_error) {
+		throw new Error("Invalid server response");
+	}
+
+	if (!response.ok) {
+		throw new Error(data && data.message ? data.message : "Request failed");
+	}
+
+	if (data && data.unauthorized) {
+		if (window.AuthSession) window.AuthSession.clear();
+		window.location.href = "login.html";
+		throw new Error("Unauthorized session");
+	}
+
+	return data;
+};
+
 window.AppDataCache = (() => {
 	const CACHE_PREFIX = "lm_cache_v2";
 	const META_KEY = `${CACHE_PREFIX}:meta`;
@@ -11,8 +135,16 @@ window.AppDataCache = (() => {
 	let metaPromise = null;
 
 	function buildUrl(action) {
-		if (!action || action === "leads") return API_URL;
-		return `${API_URL}?action=${encodeURIComponent(action)}`;
+		const session = window.AuthSession ? window.AuthSession.get() : null;
+		if (!session || !session.token) {
+			throw new Error("Missing or expired session");
+		}
+
+		if (!action || action === "leads") {
+			return `${API_URL}?auth_token=${encodeURIComponent(session.token)}`;
+		}
+
+		return `${API_URL}?action=${encodeURIComponent(action)}&auth_token=${encodeURIComponent(session.token)}`;
 	}
 
 	function getResourceKey(action) {
@@ -45,8 +177,16 @@ window.AppDataCache = (() => {
 	}
 
 	async function fetchJson(action) {
-		const response = await fetch(buildUrl(action));
-		return response.json();
+		const response = await fetch(buildUrl(action), { cache: "no-store" });
+		const data = await response.json();
+
+		if (data && data.unauthorized) {
+			if (window.AuthSession) window.AuthSession.clear();
+			window.location.href = "login.html";
+			throw new Error("Unauthorized session");
+		}
+
+		return data;
 	}
 
 	function readCachedResource(action) {

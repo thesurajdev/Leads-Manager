@@ -4,6 +4,205 @@ function outputJSON(data) {
       .setMimeType(ContentService.MimeType.JSON);
   }
 
+  const SESSION_DURATION_MS = 8 * 60 * 60 * 1000;
+  const LOGIN_WINDOW_SECONDS = 15 * 60;
+  const LOGIN_MAX_ATTEMPTS = 8;
+
+  function base64UrlEncode(input) {
+    const bytes = input instanceof Uint8Array ? input : Utilities.newBlob(String(input)).getBytes();
+    return Utilities.base64EncodeWebSafe(bytes).replace(/=+$/g, "");
+  }
+
+  function sha256Hex(value) {
+    const digest = Utilities.computeDigest(Utilities.DigestAlgorithm.SHA_256, String(value));
+    return digest
+      .map((byte) => {
+        const normalized = byte < 0 ? byte + 256 : byte;
+        return ("0" + normalized.toString(16)).slice(-2);
+      })
+      .join("");
+  }
+
+  function getSigningSecret() {
+    const props = PropertiesService.getScriptProperties();
+    let secret = props.getProperty("LM_SIGNING_SECRET");
+    if (!secret) {
+      secret = Utilities.getUuid() + Utilities.getUuid();
+      props.setProperty("LM_SIGNING_SECRET", secret);
+    }
+    return secret;
+  }
+
+  function signTokenPayload(payloadEncoded) {
+    const signatureBytes = Utilities.computeHmacSha256Signature(payloadEncoded, getSigningSecret());
+    return base64UrlEncode(new Uint8Array(signatureBytes));
+  }
+
+  function createSessionToken(username, role) {
+    const expiresAt = Date.now() + SESSION_DURATION_MS;
+    const payload = {
+      sub: String(username || ""),
+      role: String(role || ""),
+      exp: expiresAt
+    };
+    const payloadEncoded = base64UrlEncode(JSON.stringify(payload));
+    const signature = signTokenPayload(payloadEncoded);
+    return {
+      token: payloadEncoded + "." + signature,
+      expiresAt
+    };
+  }
+
+  function timingSafeEqual(a, b) {
+    const left = String(a || "");
+    const right = String(b || "");
+    const maxLen = Math.max(left.length, right.length);
+    let diff = left.length === right.length ? 0 : 1;
+
+    for (let i = 0; i < maxLen; i++) {
+      const leftCode = i < left.length ? left.charCodeAt(i) : 0;
+      const rightCode = i < right.length ? right.charCodeAt(i) : 0;
+      diff |= leftCode ^ rightCode;
+    }
+
+    return diff === 0;
+  }
+
+  function verifySessionToken(token) {
+    const raw = String(token || "").trim();
+    if (!raw || raw.indexOf(".") === -1) return null;
+
+    const parts = raw.split(".");
+    if (parts.length !== 2) return null;
+
+    const payloadEncoded = parts[0];
+    const providedSignature = parts[1];
+    const expectedSignature = signTokenPayload(payloadEncoded);
+
+    if (!timingSafeEqual(expectedSignature, providedSignature)) {
+      return null;
+    }
+
+    let payload;
+    try {
+      payload = JSON.parse(Utilities.newBlob(Utilities.base64DecodeWebSafe(payloadEncoded)).getDataAsString());
+    } catch (_error) {
+      return null;
+    }
+
+    if (!payload || !payload.sub || !payload.role || !payload.exp) {
+      return null;
+    }
+
+    if (Number(payload.exp) <= Date.now()) {
+      return null;
+    }
+
+    return {
+      username: String(payload.sub),
+      role: String(payload.role),
+      expiresAt: Number(payload.exp)
+    };
+  }
+
+  function parseRequestData(e) {
+    try {
+      if (!e || !e.postData || !e.postData.contents) return {};
+      const parsed = JSON.parse(e.postData.contents);
+      return parsed && typeof parsed === "object" ? parsed : {};
+    } catch (_error) {
+      return {};
+    }
+  }
+
+  function requireSession(data, e) {
+    const tokenFromBody = data && data.auth_token ? String(data.auth_token) : "";
+    const tokenFromQuery = e && e.parameter && e.parameter.auth_token ? String(e.parameter.auth_token) : "";
+    const session = verifySessionToken(tokenFromBody || tokenFromQuery);
+    if (!session) {
+      return {
+        ok: false,
+        response: outputJSON({
+          success: false,
+          unauthorized: true,
+          message: "Unauthorized or expired session"
+        })
+      };
+    }
+    return { ok: true, session };
+  }
+
+  function isManagerOrAdmin(role) {
+    const normalized = String(role || "");
+    return normalized === "Manager" || normalized === "Admin";
+  }
+
+  function sanitizeCellValue(value) {
+    if (value === null || value === undefined) return "";
+    if (typeof value === "number" || typeof value === "boolean") return value;
+
+    const str = String(value).trim();
+    if (!str) return "";
+
+    // Prevent formula execution when values are opened in spreadsheet cells.
+    if (/^[=+\-@]/.test(str)) {
+      return "'" + str;
+    }
+
+    return str;
+  }
+
+  function verifyPassword(inputPassword, storedPassword) {
+    const input = String(inputPassword || "");
+    const stored = String(storedPassword || "");
+
+    if (stored.indexOf("sha256$") === 0) {
+      const parts = stored.split("$");
+      if (parts.length !== 3) return false;
+      const salt = parts[1];
+      const expectedHex = parts[2];
+      const computedHex = sha256Hex(salt + ":" + input);
+      return timingSafeEqual(computedHex, expectedHex);
+    }
+
+    // Legacy fallback. Existing plain-text rows should be migrated to hashed format.
+    return timingSafeEqual(input, stored);
+  }
+
+  function rateLimitKey(username) {
+    return "login_attempts:" + String(username || "").trim().toLowerCase();
+  }
+
+  function getLoginAttemptCount(username) {
+    const cache = CacheService.getScriptCache();
+    const raw = cache.get(rateLimitKey(username));
+    return Number(raw || 0);
+  }
+
+  function increaseLoginAttemptCount(username) {
+    const cache = CacheService.getScriptCache();
+    const next = getLoginAttemptCount(username) + 1;
+    cache.put(rateLimitKey(username), String(next), LOGIN_WINDOW_SECONDS);
+    return next;
+  }
+
+  function clearLoginAttemptCount(username) {
+    CacheService.getScriptCache().remove(rateLimitKey(username));
+  }
+
+  function mapSheetRows(sheet) {
+    const data = sheet.getDataRange().getValues();
+    const headers = data[0] || [];
+    const rows = data.slice(1);
+    return rows.map((row) => {
+      const obj = {};
+      headers.forEach((header, index) => {
+        obj[header] = row[index];
+      });
+      return obj;
+    });
+  }
+
   function normalizeHeader(value) {
     return String(value || "")
       .trim()
@@ -37,9 +236,9 @@ function outputJSON(data) {
     Object.keys(conditionalFields).forEach((fieldName) => {
       const mappedColumn = headerIndex[normalizeHeader(fieldName)];
       if (mappedColumn !== undefined) {
-        row[mappedColumn] = conditionalFields[fieldName];
+        row[mappedColumn] = sanitizeCellValue(conditionalFields[fieldName]);
       } else {
-        unresolvedConditionalFields[fieldName] = conditionalFields[fieldName];
+        unresolvedConditionalFields[fieldName] = sanitizeCellValue(conditionalFields[fieldName]);
       }
     });
 
@@ -56,6 +255,10 @@ function outputJSON(data) {
     const action = e.parameter.action || "leads";
     const ss = SpreadsheetApp.getActiveSpreadsheet();
 
+    const auth = requireSession({}, e);
+    if (!auth.ok) return auth.response;
+    const session = auth.session;
+
     if (action === "meta") {
       const file = DriveApp.getFileById(ss.getId());
 
@@ -68,66 +271,60 @@ function outputJSON(data) {
     // 🔥 MASTER DATA
     if (action === "master") {
       const sheet = ss.getSheetByName("Master_Data");
-      const data = sheet.getDataRange().getValues();
-  
-      const headers = data[0];
-      const rows = data.slice(1);
-  
-      const master = rows.map(row => {
-        let obj = {};
-        headers.forEach((header, index) => {
-          obj[header] = row[index];
-        });
-        return obj;
-      });
-  
-      return outputJSON(master);
+      return outputJSON(mapSheetRows(sheet));
     }
   
     // 🔥 FOLLOWUPS
     if (action === "followups") {
       const sheet = ss.getSheetByName("Followups");
-      const data = sheet.getDataRange().getValues();
-  
-      const headers = data[0];
-      const rows = data.slice(1);
-  
-      const followups = rows.map(row => {
-        let obj = {};
-        headers.forEach((header, index) => {
-          obj[header] = row[index];
-        });
-        return obj;
-      });
-  
+      let followups = mapSheetRows(sheet);
+      if (!isManagerOrAdmin(session.role)) {
+        followups = followups.filter((item) => String(item["Created By"] || "") === session.username);
+      }
       return outputJSON(followups);
     }
   
     // 🔥 DEFAULT = LEADS
     const sheet = ss.getSheetByName("Leads_Master");
-    const data = sheet.getDataRange().getValues();
-  
-    const headers = data[0];
-    const rows = data.slice(1);
-  
-    const leads = rows.map(row => {
-      let obj = {};
-      headers.forEach((header, index) => {
-        obj[header] = row[index];
-      });
-      return obj;
-    });
-  
+    let leads = mapSheetRows(sheet);
+    if (!isManagerOrAdmin(session.role)) {
+      leads = leads.filter((item) => String(item["Lead Owner"] || "") === session.username);
+    }
     return outputJSON(leads);
   }
   
   function doPost(e) {
     try {
       const ss = SpreadsheetApp.getActiveSpreadsheet();
-      const data = JSON.parse(e.postData.contents);
+      const data = parseRequestData(e);
+
+      if (!data || typeof data !== "object") {
+        return outputJSON({
+          success: false,
+          message: "Invalid request payload"
+        });
+      }
   
       // 🔐 LOGIN CHECK
       if (data.type === "login") {
+        const usernameInput = String(data.username || "").trim();
+        const passwordInput = String(data.password || "");
+
+        if (!usernameInput || !passwordInput) {
+          return outputJSON({
+            success: false,
+            message: "Username and password are required"
+          });
+        }
+
+        if (getLoginAttemptCount(usernameInput) >= LOGIN_MAX_ATTEMPTS) {
+          return outputJSON({
+            success: false,
+            throttled: true,
+            message: "Too many failed attempts. Try again later."
+          });
+        }
+
         const sheet = ss.getSheetByName("Users");
         const dataRows = sheet.getDataRange().getValues();
   
@@ -136,35 +333,37 @@ function outputJSON(data) {
           const password = String(dataRows[i][1] || "");
           const role = String(dataRows[i][2] || "");
   
-          if (
-            username === data.username &&
-            password === data.password
-          ) {
+          if (timingSafeEqual(username, usernameInput) && verifyPassword(passwordInput, password)) {
+            clearLoginAttemptCount(usernameInput);
+            const sessionToken = createSessionToken(username, role);
             return outputJSON({
               success: true,
               username,
-              role
+              role,
+              auth_token: sessionToken.token,
+              expires_at: sessionToken.expiresAt
             });
           }
         }
+
+        increaseLoginAttemptCount(usernameInput);
   
         return outputJSON({
           success: false,
           message: "Invalid username or password"
         });
       }
+
+      const auth = requireSession(data, e);
+      if (!auth.ok) return auth.response;
+      const session = auth.session;
   
       // 🔥 REASSIGN LEAD (Manager/Admin only)
       if (data.type === "reassignLead") {
         const leadSheet = ss.getSheetByName("Leads_Master");
         const leadData = leadSheet.getDataRange().getValues();
-  
-        const requestedRole = String(data.requested_role || "");
-  
-        const isManagerOrAdmin =
-          requestedRole === "Manager" || requestedRole === "Admin";
-  
-        if (!isManagerOrAdmin) {
+
+        if (!isManagerOrAdmin(session.role)) {
           return outputJSON({
             success: false,
             permission_denied: true,
@@ -175,7 +374,7 @@ function outputJSON(data) {
         for (let i = 1; i < leadData.length; i++) {
           if (String(leadData[i][0]) === String(data.lead_id)) {
             // Column C = Lead Owner
-            leadSheet.getRange(i + 1, 3).setValue(data.new_owner || "");
+            leadSheet.getRange(i + 1, 3).setValue(sanitizeCellValue(data.new_owner || ""));
   
             return outputJSON({
               success: true,
@@ -208,15 +407,10 @@ function outputJSON(data) {
         for (let i = 1; i < leadData.length; i++) {
           if (String(leadData[i][leadIdColumn]) === String(data.lead_id)) {
             const existingOwner = String(leadData[i][2] || "");
-            const requestedBy = String(data.requested_by || "");
-            const requestedRole = String(data.requested_role || "");
-  
-            const isManagerOrAdmin =
-              requestedRole === "Manager" || requestedRole === "Admin";
-  
-            const isOwner = existingOwner === requestedBy;
-  
-            if (!isManagerOrAdmin && !isOwner) {
+
+            const isOwner = existingOwner === session.username;
+
+            if (!isManagerOrAdmin(session.role) && !isOwner) {
               return outputJSON({
                 success: false,
                 permission_denied: true,
@@ -227,31 +421,31 @@ function outputJSON(data) {
             const updatedRow = leadData[i].slice();
 
             if (leadHeaderIndex["lead owner"] !== undefined) {
-              updatedRow[leadHeaderIndex["lead owner"]] = data.lead_owner || "";
+              updatedRow[leadHeaderIndex["lead owner"]] = sanitizeCellValue(data.lead_owner || "");
             }
             if (leadHeaderIndex["customer name"] !== undefined) {
-              updatedRow[leadHeaderIndex["customer name"]] = data.customer_name || "";
+              updatedRow[leadHeaderIndex["customer name"]] = sanitizeCellValue(data.customer_name || "");
             }
             if (leadHeaderIndex["contact no"] !== undefined) {
-              updatedRow[leadHeaderIndex["contact no"]] = data.contact_no || "";
+              updatedRow[leadHeaderIndex["contact no"]] = sanitizeCellValue(data.contact_no || "");
             }
             if (leadHeaderIndex["contact no."] !== undefined) {
-              updatedRow[leadHeaderIndex["contact no."]] = data.contact_no || "";
+              updatedRow[leadHeaderIndex["contact no."]] = sanitizeCellValue(data.contact_no || "");
             }
             if (leadHeaderIndex["email id"] !== undefined) {
-              updatedRow[leadHeaderIndex["email id"]] = data.email_id || "";
+              updatedRow[leadHeaderIndex["email id"]] = sanitizeCellValue(data.email_id || "");
             }
             if (leadHeaderIndex["lead source"] !== undefined) {
-              updatedRow[leadHeaderIndex["lead source"]] = data.lead_source || "";
+              updatedRow[leadHeaderIndex["lead source"]] = sanitizeCellValue(data.lead_source || "");
             }
             if (leadHeaderIndex["product category"] !== undefined) {
-              updatedRow[leadHeaderIndex["product category"]] = data.product_category || "";
+              updatedRow[leadHeaderIndex["product category"]] = sanitizeCellValue(data.product_category || "");
             }
             if (leadHeaderIndex["status"] !== undefined) {
-              updatedRow[leadHeaderIndex["status"]] = data.status || "";
+              updatedRow[leadHeaderIndex["status"]] = sanitizeCellValue(data.status || "");
             }
             if (leadHeaderIndex["remarks"] !== undefined) {
-              updatedRow[leadHeaderIndex["remarks"]] = data.remarks || "";
+              updatedRow[leadHeaderIndex["remarks"]] = sanitizeCellValue(data.remarks || "");
             }
 
             applyConditionalFieldsToRow(updatedRow, leadHeaderIndex, conditionalFields);
@@ -288,7 +482,7 @@ function outputJSON(data) {
           "Follow-up Status": data.followup_status || "",
           "Remarks": data.remarks || "",
           "Next Follow-up Date": data.next_followup_date || "",
-          "Created By": data.created_by || "",
+          "Created By": session.username,
           "Created Timestamp": data.created_timestamp || ""
         };
 
@@ -296,7 +490,7 @@ function outputJSON(data) {
         Object.keys(followupBaseValues).forEach((header) => {
           const columnIndex = followHeaderIndex[normalizeHeader(header)];
           if (columnIndex !== undefined) {
-            newFollowupRow[columnIndex] = followupBaseValues[header];
+            newFollowupRow[columnIndex] = sanitizeCellValue(followupBaseValues[header]);
           }
         });
 
@@ -335,11 +529,11 @@ function outputJSON(data) {
           const updatedRow = leadData[i].slice();
 
           if (statusColumn !== undefined) {
-            updatedRow[statusColumn] = data.followup_status || "";
+            updatedRow[statusColumn] = sanitizeCellValue(data.followup_status || "");
           }
 
           if (remarksColumn !== undefined) {
-            updatedRow[remarksColumn] = data.remarks || "";
+            updatedRow[remarksColumn] = sanitizeCellValue(data.remarks || "");
           }
 
           const finalLeadStatus =
@@ -352,7 +546,7 @@ function outputJSON(data) {
           }
 
           if (nextFollowupColumn !== undefined) {
-            updatedRow[nextFollowupColumn] = data.next_followup_date || "";
+            updatedRow[nextFollowupColumn] = sanitizeCellValue(data.next_followup_date || "");
           }
 
           applyConditionalFieldsToRow(updatedRow, leadHeaderIndex, conditionalFields);
@@ -364,7 +558,7 @@ function outputJSON(data) {
               conditionalFields["order value"];
 
             if (conditionalOrderValue !== undefined && conditionalOrderValue !== "") {
-              updatedRow[orderValueColumn] = conditionalOrderValue;
+              updatedRow[orderValueColumn] = sanitizeCellValue(conditionalOrderValue);
             }
           }
 
@@ -423,7 +617,7 @@ function outputJSON(data) {
       const leadBaseValues = {
         "Lead ID": data.lead_id || "",
         "Created Date": data.created_date || "",
-        "Lead Owner": data.lead_owner || "",
+        "Lead Owner": isManagerOrAdmin(session.role) ? data.lead_owner || "" : session.username,
         "Customer Name": data.customer_name || "",
         "Contact No.": data.contact_no || "",
         "Email ID": data.email_id || "",
@@ -439,7 +633,7 @@ function outputJSON(data) {
       Object.keys(leadBaseValues).forEach((header) => {
         const columnIndex = leadHeaderIndex[normalizeHeader(header)];
         if (columnIndex !== undefined) {
-          newLeadRow[columnIndex] = leadBaseValues[header];
+          newLeadRow[columnIndex] = sanitizeCellValue(leadBaseValues[header]);
         }
       });
 
@@ -452,7 +646,7 @@ function outputJSON(data) {
           conditionalFields["order value"];
 
         if (conditionalOrderValue !== undefined && conditionalOrderValue !== "") {
-          newLeadRow[leadHeaderIndex["order value"]] = conditionalOrderValue;
+          newLeadRow[leadHeaderIndex["order value"]] = sanitizeCellValue(conditionalOrderValue);
         }
       }
 
@@ -466,7 +660,7 @@ function outputJSON(data) {
     } catch (error) {
       return outputJSON({
         success: false,
-        error: error.toString()
+        message: "Request failed"
       });
     }
   }

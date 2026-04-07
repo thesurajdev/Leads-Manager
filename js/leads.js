@@ -3,8 +3,9 @@ let filteredLeads = [];
 
 const leadsTableBody = document.getElementById("leadsTableBody");
 
-const loggedInUser = localStorage.getItem("loggedInUser");
-const userRole = localStorage.getItem("userRole");
+const session = window.AuthSession ? window.AuthSession.requireValid() : null;
+const loggedInUser = session ? session.username : "";
+const userRole = session ? session.role : "";
 
 const searchInput = document.getElementById("searchInput");
 const statusFilter = document.getElementById("statusFilter");
@@ -316,17 +317,10 @@ async function reassignLead(leadId, currentOwner) {
     const payload = {
       type: "reassignLead",
       lead_id: leadId,
-      new_owner: newOwner.trim(),
-      requested_by: loggedInUser,
-      requested_role: userRole
+      new_owner: newOwner.trim()
     };
 
-    const res = await fetch(API_URL, {
-      method: "POST",
-      body: JSON.stringify(payload)
-    });
-
-    const result = await res.json();
+    const result = await window.apiPost(payload);
 
     if (result.success) {
       alert("Reassigned successfully!");

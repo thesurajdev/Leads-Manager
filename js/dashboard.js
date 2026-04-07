@@ -1,8 +1,9 @@
 let leads = [];
 
 const dashboardCards = document.getElementById("dashboardCards");
-const loggedInUser = localStorage.getItem("loggedInUser");
-const userRole = localStorage.getItem("userRole");
+const session = window.AuthSession ? window.AuthSession.requireValid() : null;
+const loggedInUser = session ? session.username : "";
+const userRole = session ? session.role : "";
 
 if (!loggedInUser || !userRole) {
   window.location.href = "login.html";
