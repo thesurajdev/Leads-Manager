@@ -434,6 +434,7 @@ form.addEventListener("submit", async function (e) {
         product_category,
         status,
         remarks,
+        conditional_fields: conditionalValues,
         requested_by: loggedInUser,
         requested_role: userRole
       };
