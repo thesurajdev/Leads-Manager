@@ -11,6 +11,7 @@ const statusFilter = document.getElementById("statusFilter");
 const sourceFilter = document.getElementById("sourceFilter");
 const productFilter = document.getElementById("productFilter");
 const leadInsights = document.getElementById("leadInsights");
+let filtersBound = false;
 
 if (!loggedInUser || !userRole) {
   window.location.href = "login.html";
@@ -18,7 +19,26 @@ if (!loggedInUser || !userRole) {
 
 loadLeads();
 
+function showLeadsLoadingState() {
+  leadsTableBody.innerHTML = `
+    <tr>
+      <td colspan="11" class="empty-state">Loading leads... Please wait.</td>
+    </tr>
+  `;
+
+  if (leadInsights) {
+    leadInsights.innerHTML = `
+      <div class="insight-card"><strong>Visible leads</strong><span class="insight-value">...</span><p>Fetching latest data.</p></div>
+      <div class="insight-card"><strong>Open pipeline</strong><span class="insight-value">...</span><p>Fetching latest data.</p></div>
+      <div class="insight-card"><strong>Today and overdue</strong><span class="insight-value">...</span><p>Fetching latest data.</p></div>
+      <div class="insight-card"><strong>Won leads</strong><span class="insight-value">...</span><p>Fetching latest data.</p></div>
+    `;
+  }
+}
+
 async function loadLeads() {
+  showLeadsLoadingState();
+
   try {
     const res = await fetch(API_URL);
     const rawLeads = await res.json();
@@ -156,10 +176,13 @@ function populateFilters() {
 }
 
 function attachFilterEvents() {
+  if (filtersBound) return;
+
   searchInput.addEventListener("input", applyFilters);
   statusFilter.addEventListener("change", applyFilters);
   sourceFilter.addEventListener("change", applyFilters);
   productFilter.addEventListener("change", applyFilters);
+  filtersBound = true;
 }
 
 function applyFilters() {

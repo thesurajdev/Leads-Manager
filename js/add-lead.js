@@ -15,18 +15,27 @@ document.getElementById("lead_owner").value = loggedInUser;
 let isSubmitting = false;
 let isEditMode = false;
 
+saveLeadBtn.disabled = true;
+saveLeadBtn.innerText = "Loading...";
+
 // 🚀 Start page
 initPage();
 
 async function initPage() {
-  await loadMasterData();
+  try {
+    await loadMasterData();
 
-  if (editLeadId) {
-    isEditMode = true;
-    pageTitle.innerText = "Edit Lead";
-    await loadLeadForEdit(editLeadId);
-  } else {
-    pageTitle.innerText = "Add New Lead";
+    if (editLeadId) {
+      isEditMode = true;
+      pageTitle.innerText = "Edit Lead";
+      await loadLeadForEdit(editLeadId);
+      saveLeadBtn.innerText = "Update Lead";
+    } else {
+      pageTitle.innerText = "Add New Lead";
+      saveLeadBtn.innerText = "Save Lead";
+    }
+  } finally {
+    saveLeadBtn.disabled = false;
   }
 }
 

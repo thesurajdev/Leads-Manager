@@ -16,6 +16,8 @@ const filterValue = document.getElementById("filterValue");
 const dateFrom = document.getElementById("dateFrom");
 const dateTo = document.getElementById("dateTo");
 const generateReportBtn = document.getElementById("generateReportBtn");
+const generateBtnDefaultText = generateReportBtn ? generateReportBtn.textContent : "Generate Report";
+let reportDataReady = false;
 
 if (!loggedInUser || !userRole) {
   window.location.href = "login.html";
@@ -30,6 +32,11 @@ if (userRole !== "Manager" && userRole !== "Admin") {
   `;
 } else {
   reportBuilder.style.display = "block";
+  if (generateReportBtn) {
+    generateReportBtn.disabled = true;
+    generateReportBtn.textContent = "Loading data...";
+  }
+  reportOutput.innerHTML = `<div class="empty-state">Loading report data... Please wait.</div>`;
   loadLeads();
 }
 
@@ -58,13 +65,30 @@ async function loadLeads() {
       next_followup_date: String(lead["Next Follow-up Date"] || "")
     }));
 
+    reportDataReady = true;
+    if (generateReportBtn) {
+      generateReportBtn.disabled = false;
+      generateReportBtn.textContent = generateBtnDefaultText;
+    }
+    generateReport();
+
   } catch (error) {
     console.error("Error loading leads for report:", error);
+    reportDataReady = false;
+    if (generateReportBtn) {
+      generateReportBtn.disabled = true;
+      generateReportBtn.textContent = "Generate Report";
+    }
     reportOutput.innerHTML = `<div class="access-denied"><strong>Report error</strong><p>Failed to load report data.</p></div>`;
   }
 }
 
 function generateReport() {
+  if (!reportDataReady) {
+    reportOutput.innerHTML = `<div class="empty-state">Loading report data... Please wait.</div>`;
+    return;
+  }
+
   const rowKey = rowField.value;
   const colKey = columnField.value;
   const valueType = valueField.value;

@@ -15,7 +15,24 @@ if (!loggedInUser || !userRole) {
 
 const today = new Date().toISOString().split("T")[0];
 
+function showFollowupsLoadingState() {
+  const loadingRow = `<tr><td colspan="7" class="empty-state">Loading follow-ups... Please wait.</td></tr>`;
+  todayFollowupsBody.innerHTML = loadingRow;
+  overdueFollowupsBody.innerHTML = loadingRow;
+  upcomingFollowupsBody.innerHTML = loadingRow;
+
+  if (followupInsights) {
+    followupInsights.innerHTML = `
+      <div class="insight-card"><strong>Due today</strong><span class="insight-value">...</span><p>Fetching latest data.</p></div>
+      <div class="insight-card"><strong>Overdue</strong><span class="insight-value">...</span><p>Fetching latest data.</p></div>
+      <div class="insight-card"><strong>Upcoming</strong><span class="insight-value">...</span><p>Fetching latest data.</p></div>
+    `;
+  }
+}
+
 async function loadData() {
+  showFollowupsLoadingState();
+
   try {
     const leadsRes = await fetch(API_URL);
     const leadsRaw = await leadsRes.json();

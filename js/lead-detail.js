@@ -19,7 +19,32 @@ let lead = null;
 
 loadLeadAndFollowups();
 
+function showLeadDetailLoadingState() {
+  if (leadSummaryStrip) {
+    leadSummaryStrip.innerHTML = `
+      <div class="insight-card"><strong>Lead ID</strong><span class="insight-value">...</span><p>Loading lead data.</p></div>
+      <div class="insight-card"><strong>Status</strong><span class="insight-value">...</span><p>Loading lead data.</p></div>
+      <div class="insight-card"><strong>Owner</strong><span class="insight-value">...</span><p>Loading lead data.</p></div>
+      <div class="insight-card"><strong>Next follow-up</strong><span class="insight-value">...</span><p>Loading lead data.</p></div>
+    `;
+  }
+
+  if (leadDetailBox) {
+    leadDetailBox.innerHTML = `<div class="empty-state">Loading lead details... Please wait.</div>`;
+  }
+
+  if (followupTableBody) {
+    followupTableBody.innerHTML = `<tr><td colspan="5" class="empty-state">Loading follow-up history...</td></tr>`;
+  }
+
+  if (timelineBox) {
+    timelineBox.innerHTML = `<div class="empty-state">Loading timeline...</div>`;
+  }
+}
+
 async function loadLeadAndFollowups() {
+  showLeadDetailLoadingState();
+
   try {
     const leadsRes = await fetch(API_URL);
     const leadsRaw = await leadsRes.json();
@@ -196,10 +221,20 @@ function renderTimeline() {
 followupForm.addEventListener("submit", async function (e) {
   e.preventDefault();
 
+  const submitBtn = followupForm.querySelector("button[type='submit']");
+  if (submitBtn) {
+    submitBtn.disabled = true;
+    submitBtn.textContent = "Saving...";
+  }
+
   if (!lead) return;
 
   if (lead.lead_status !== "Open") {
     alert("This lead is closed. No more follow-ups can be added.");
+    if (submitBtn) {
+      submitBtn.disabled = false;
+      submitBtn.textContent = "Add Follow-up";
+    }
     return;
   }
 
@@ -239,10 +274,18 @@ followupForm.addEventListener("submit", async function (e) {
       loadLeadAndFollowups();
     } else {
       alert("Failed to save follow-up.");
+      if (submitBtn) {
+        submitBtn.disabled = false;
+        submitBtn.textContent = "Add Follow-up";
+      }
     }
 
   } catch (error) {
     console.error("Error saving follow-up:", error);
     alert("Error saving follow-up.");
+    if (submitBtn) {
+      submitBtn.disabled = false;
+      submitBtn.textContent = "Add Follow-up";
+    }
   }
 });
