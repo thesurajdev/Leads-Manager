@@ -9,7 +9,7 @@ if (!loggedInUser || !userRole) {
   window.location.href = "login.html";
 }
 
-const today = new Date().toISOString().split("T")[0];
+const today = window.AppTime.todayISO();
 
 function showDashboardFatal(message) {
   try {

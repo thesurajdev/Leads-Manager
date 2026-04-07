@@ -514,7 +514,7 @@ form.addEventListener("submit", async function (e) {
     }
 
     const lead_id = "LD-" + Date.now();
-    const created_date = new Date().toISOString().split("T")[0];
+    const created_date = window.AppTime.todayISO();
 
     const newLead = {
       lead_id,

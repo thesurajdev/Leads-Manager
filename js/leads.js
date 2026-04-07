@@ -106,7 +106,7 @@ function applyLeadsData(rawLeads) {
 }
 
 function getLeadPriority(lead) {
-  const today = new Date().toISOString().split("T")[0];
+  const today = window.AppTime.todayISO();
 
   if (lead.lead_status !== "Open") {
     return { label: "Closed" };
@@ -381,6 +381,6 @@ function exportLeadsCSV() {
 
   const a = document.createElement("a");
   a.href = url;
-  a.download = `leads_${new Date().toISOString().split("T")[0]}.csv`;
+  a.download = `leads_${window.AppTime.todayISO()}.csv`;
   a.click();
 }

@@ -1,6 +1,164 @@
 const API_URL = "https://script.google.com/macros/s/AKfycbyoKk0eoLUfNaTEOrCWm9GmGjCG9ykU_Dvz3SG9aXzij9v-_uencXJuDrJuWI_E4QX9/exec";
 /*const Deployment_ID = "AKfycbyaTkDRx7dejPy2KvAv599ItfZunT4q54p-2TZLqgm6J9yvu4wN_fJ3evzWvrPNGzXM";*/
 
+window.AppTime = (() => {
+	const INDIA_TIME_ZONE = "Asia/Kolkata";
+
+	function pad(value) {
+		return String(value).padStart(2, "0");
+	}
+
+	function parseIsoDateParts(isoDate) {
+		const match = /^(\d{4})-(\d{2})-(\d{2})$/.exec(String(isoDate || "").trim());
+		if (!match) return null;
+
+		return {
+			year: Number(match[1]),
+			month: Number(match[2]),
+			day: Number(match[3])
+		};
+	}
+
+	function getIndiaDateParts(date = new Date()) {
+		if (!(date instanceof Date) || Number.isNaN(date.getTime())) return null;
+
+		const parts = new Intl.DateTimeFormat("en-CA", {
+			timeZone: INDIA_TIME_ZONE,
+			year: "numeric",
+			month: "2-digit",
+			day: "2-digit"
+		}).formatToParts(date);
+
+		const map = {};
+		parts.forEach((part) => {
+			if (part.type !== "literal") {
+				map[part.type] = part.value;
+			}
+		});
+
+		return {
+			year: Number(map.year),
+			month: Number(map.month),
+			day: Number(map.day)
+		};
+	}
+
+	function isoFromParts(parts) {
+		if (!parts) return "";
+		return `${parts.year}-${pad(parts.month)}-${pad(parts.day)}`;
+	}
+
+	function dateUtcFromIso(isoDate) {
+		const parts = parseIsoDateParts(isoDate);
+		if (!parts) return null;
+		return new Date(Date.UTC(parts.year, parts.month - 1, parts.day));
+	}
+
+	function isoFromUtcDate(date) {
+		if (!(date instanceof Date) || Number.isNaN(date.getTime())) return "";
+		return `${date.getUTCFullYear()}-${pad(date.getUTCMonth() + 1)}-${pad(date.getUTCDate())}`;
+	}
+
+	function todayISO() {
+		return isoFromParts(getIndiaDateParts(new Date()));
+	}
+
+	function fromDateToIndiaISO(date) {
+		return isoFromParts(getIndiaDateParts(date));
+	}
+
+	function addDaysISO(isoDate, days) {
+		const date = dateUtcFromIso(isoDate);
+		if (!date) return "";
+
+		date.setUTCDate(date.getUTCDate() + Number(days || 0));
+		return isoFromUtcDate(date);
+	}
+
+	function getWeekRangeISO(referenceISO = todayISO()) {
+		const referenceDate = dateUtcFromIso(referenceISO);
+		if (!referenceDate) return { from: "", to: "" };
+
+		const day = referenceDate.getUTCDay();
+		const firstDay = new Date(referenceDate);
+		firstDay.setUTCDate(referenceDate.getUTCDate() - day);
+
+		const lastDay = new Date(firstDay);
+		lastDay.setUTCDate(firstDay.getUTCDate() + 6);
+
+		return {
+			from: isoFromUtcDate(firstDay),
+			to: isoFromUtcDate(lastDay)
+		};
+	}
+
+	function getMonthRangeISO(referenceISO = todayISO()) {
+		const parts = parseIsoDateParts(referenceISO);
+		if (!parts) return { from: "", to: "" };
+
+		const firstDay = new Date(Date.UTC(parts.year, parts.month - 1, 1));
+		const lastDay = new Date(Date.UTC(parts.year, parts.month, 0));
+
+		return {
+			from: isoFromUtcDate(firstDay),
+			to: isoFromUtcDate(lastDay)
+		};
+	}
+
+	function getLastMonthRangeISO(referenceISO = todayISO()) {
+		const parts = parseIsoDateParts(referenceISO);
+		if (!parts) return { from: "", to: "" };
+
+		let year = parts.year;
+		let month = parts.month - 1;
+
+		if (month === 0) {
+			month = 12;
+			year -= 1;
+		}
+
+		const firstDay = new Date(Date.UTC(year, month - 1, 1));
+		const lastDay = new Date(Date.UTC(year, month, 0));
+
+		return {
+			from: isoFromUtcDate(firstDay),
+			to: isoFromUtcDate(lastDay)
+		};
+	}
+
+	function formatDate(value) {
+		if (!value) return "-";
+
+		const date = value instanceof Date ? value : new Date(value);
+		if (!(date instanceof Date) || Number.isNaN(date.getTime())) {
+			return String(value);
+		}
+
+		return date.toLocaleDateString("en-IN", {
+			timeZone: INDIA_TIME_ZONE,
+			year: "numeric",
+			month: "short",
+			day: "numeric"
+		});
+	}
+
+	function nowTimestamp() {
+		return new Date().toLocaleString("en-IN", { timeZone: INDIA_TIME_ZONE });
+	}
+
+	return {
+		INDIA_TIME_ZONE,
+		todayISO,
+		fromDateToIndiaISO,
+		addDaysISO,
+		getWeekRangeISO,
+		getMonthRangeISO,
+		getLastMonthRangeISO,
+		formatDate,
+		nowTimestamp
+	};
+})();
+
 window.AuthSession = (() => {
 	const SESSION_KEY = "lm_auth_session_v1";
 	const LEGACY_USER_KEY = "loggedInUser";

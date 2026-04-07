@@ -308,50 +308,39 @@ function exportReportCSV() {
 
   const link = document.createElement("a");
   link.setAttribute("href", url);
-  link.setAttribute("download", `pivot_report_${new Date().toISOString().split("T")[0]}.csv`);
+  link.setAttribute("download", `pivot_report_${window.AppTime.todayISO()}.csv`);
   document.body.appendChild(link);
   link.click();
   document.body.removeChild(link);
 }
 
 function setDatePreset(type) {
-  const now = new Date();
+  const todayValue = window.AppTime.todayISO();
 
   let from = "";
   let to = "";
 
   if (type === "today") {
-    const todayValue = now.toISOString().split("T")[0];
     from = todayValue;
     to = todayValue;
   }
 
   if (type === "week") {
-    const temp = new Date();
-    const day = temp.getDay();
-    const diff = temp.getDate() - day;
-    const firstDay = new Date(temp.setDate(diff));
-    const lastDay = new Date(firstDay);
-    lastDay.setDate(firstDay.getDate() + 6);
-
-    from = firstDay.toISOString().split("T")[0];
-    to = lastDay.toISOString().split("T")[0];
+    const range = window.AppTime.getWeekRangeISO(todayValue);
+    from = range.from;
+    to = range.to;
   }
 
   if (type === "month") {
-    const firstDay = new Date(now.getFullYear(), now.getMonth(), 1);
-    const lastDay = new Date(now.getFullYear(), now.getMonth() + 1, 0);
-
-    from = firstDay.toISOString().split("T")[0];
-    to = lastDay.toISOString().split("T")[0];
+    const range = window.AppTime.getMonthRangeISO(todayValue);
+    from = range.from;
+    to = range.to;
   }
 
   if (type === "lastMonth") {
-    const firstDay = new Date(now.getFullYear(), now.getMonth() - 1, 1);
-    const lastDay = new Date(now.getFullYear(), now.getMonth(), 0);
-
-    from = firstDay.toISOString().split("T")[0];
-    to = lastDay.toISOString().split("T")[0];
+    const range = window.AppTime.getLastMonthRangeISO(todayValue);
+    from = range.from;
+    to = range.to;
   }
 
   if (type === "clear") {

@@ -474,10 +474,7 @@ function refreshLeadDetailView() {
 }
 
 function formatDate(dateStr) {
-  if (!dateStr) return "-";
-  const date = new Date(dateStr);
-  if (isNaN(date.getTime())) return dateStr;
-  return date.toLocaleDateString('en-IN', { year: 'numeric', month: 'short', day: 'numeric' });
+  return window.AppTime.formatDate(dateStr);
 }
 
 function getStatusColor(status) {
@@ -685,16 +682,14 @@ followupForm.addEventListener("submit", async function (e) {
   const conditionalFieldValues = collectConditionalFieldValues();
 
   const validationErrors = [];
-  const today = new Date();
-  today.setHours(0, 0, 0, 0);
+  const todayISO = window.AppTime.todayISO();
 
   if (!followup_date) {
     validationErrors.push("Follow-up Date is required.");
   }
 
   if (followup_date) {
-    const followupDateObj = new Date(followup_date);
-    if (followupDateObj > today) {
+    if (followup_date > todayISO) {
       validationErrors.push("Follow-up Date cannot be in the future.");
     }
   }
@@ -723,7 +718,7 @@ followupForm.addEventListener("submit", async function (e) {
 
   document.getElementById("followup_date").classList.toggle(
     "is-invalid",
-    !followup_date || new Date(followup_date) > today
+    !followup_date || followup_date > todayISO
   );
   document.getElementById("followup_remarks").classList.toggle(
     "is-invalid",
@@ -753,7 +748,7 @@ followupForm.addEventListener("submit", async function (e) {
     next_followup_date,
     conditional_fields: conditionalFieldValues,
     created_by: loggedInUser,
-    created_timestamp: new Date().toLocaleString()
+    created_timestamp: window.AppTime.nowTimestamp()
   };
 
   try {

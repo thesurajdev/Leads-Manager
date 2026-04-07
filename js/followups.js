@@ -13,7 +13,7 @@ if (!loggedInUser || !userRole) {
   window.location.href = "login.html";
 }
 
-const today = new Date().toISOString().split("T")[0];
+const today = window.AppTime.todayISO();
 
 function showFollowupsLoadingState() {
   const loadingRow = `<tr><td colspan="7" class="empty-state">Loading follow-ups... Please wait.</td></tr>`;
