@@ -1,7 +1,40 @@
-function outputJSON(data) {
-    return ContentService
-      .createTextOutput(JSON.stringify(data))
-      .setMimeType(ContentService.MimeType.JSON);
+function withCors(output) {
+    if (!output) return output;
+  const ALLOWED_ORIGIN = "https://leads-manager.surajdev.com";
+
+    // Apps Script runtimes may expose either setHeader or setHeaders.
+    if (typeof output.setHeaders === "function") {
+      output.setHeaders({
+        "Access-Control-Allow-Origin": ALLOWED_ORIGIN,
+        "Access-Control-Allow-Methods": "GET, POST, OPTIONS",
+        "Access-Control-Allow-Headers": "Content-Type, Authorization"
+      });
+      return output;
+    }
+
+    if (typeof output.setHeader === "function") {
+      output.setHeader("Access-Control-Allow-Origin", ALLOWED_ORIGIN);
+      output.setHeader("Access-Control-Allow-Methods", "GET, POST, OPTIONS");
+      output.setHeader("Access-Control-Allow-Headers", "Content-Type, Authorization");
+    }
+
+    return output;
+  }
+
+  function outputJSON(data) {
+    return withCors(
+      ContentService
+        .createTextOutput(JSON.stringify(data))
+        .setMimeType(ContentService.MimeType.JSON)
+    );
+  }
+
+  function doOptions() {
+    return withCors(
+      ContentService
+        .createTextOutput("")
+        .setMimeType(ContentService.MimeType.TEXT)
+    );
   }
 
   const SESSION_DURATION_MS = 8 * 60 * 60 * 1000;
