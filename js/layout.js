@@ -56,6 +56,21 @@ try {
   // ignore
 }
 
+try {
+  const sidebar = document.querySelector(".sidebar");
+  if (sidebar && !document.getElementById("sidebarCloseBtn")) {
+    const closeBtn = document.createElement("button");
+    closeBtn.id = "sidebarCloseBtn";
+    closeBtn.className = "sidebar-close-btn";
+    closeBtn.type = "button";
+    closeBtn.setAttribute("aria-label", "Close sidebar");
+    closeBtn.textContent = "×";
+    sidebar.insertBefore(closeBtn, sidebar.firstChild);
+  }
+} catch (e) {
+  // ignore
+}
+
 function showGlobalAppError(message) {
   try {
     const host =
@@ -179,6 +194,11 @@ window.addEventListener("resize", () => {
 const sidebarBackdrop = document.getElementById("sidebarBackdrop");
 if (sidebarBackdrop) {
   sidebarBackdrop.addEventListener("click", () => setMobileSidebarOpen(false));
+}
+
+const sidebarCloseBtn = document.getElementById("sidebarCloseBtn");
+if (sidebarCloseBtn) {
+  sidebarCloseBtn.addEventListener("click", () => setMobileSidebarOpen(false));
 }
 
 document.querySelectorAll(".sidebar-nav a[href]").forEach((a) => {
