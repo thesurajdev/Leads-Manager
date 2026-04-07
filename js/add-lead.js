@@ -1,6 +1,168 @@
 const form = document.getElementById("leadForm");
 const saveLeadBtn = document.getElementById("saveLeadBtn");
 const pageTitle = document.getElementById("pageTitle");
+const statusSelect = document.getElementById("status");
+const conditionalLeadFields = document.getElementById("conditionalLeadFields");
+
+let conditionalFieldsByStatus = {};
+
+function normalizeKey(value) {
+  return String(value || "")
+    .trim()
+    .toLowerCase()
+    .replace(/[^a-z0-9]+/g, "_")
+    .replace(/^_+|_+$/g, "");
+}
+
+function escapeHtml(value) {
+  return String(value || "")
+    .replace(/&/g, "&amp;")
+    .replace(/</g, "&lt;")
+    .replace(/>/g, "&gt;")
+    .replace(/"/g, "&quot;")
+    .replace(/'/g, "&#39;");
+}
+
+function parseBoolean(value) {
+  const normalized = String(value || "").trim().toLowerCase();
+  return ["true", "yes", "1", "required", "y"].includes(normalized);
+}
+
+function parseOptionList(value) {
+  return String(value || "")
+    .split(/[|,]/)
+    .map((o) => o.trim())
+    .filter(Boolean);
+}
+
+function deriveStatusFromType(typeValue) {
+  const rawType = String(typeValue || "").trim();
+  if (!rawType) return "";
+  const normalizedType = rawType.toLowerCase();
+  if (!normalizedType.includes("follow") || !normalizedType.includes("condition")) return "";
+  const delimiterMatch = rawType.match(/follow\s*-?\s*up\s*condition\s*[:|-]\s*(.+)$/i);
+  if (delimiterMatch && delimiterMatch[1]) return delimiterMatch[1].trim();
+  const trailingMatch = rawType.match(/follow\s*-?\s*up\s*condition\s+(.+)$/i);
+  if (trailingMatch && trailingMatch[1]) return trailingMatch[1].trim();
+  return "";
+}
+
+function extractConditionalConfigFromMaster(rows) {
+  const byStatus = {};
+
+  rows.forEach((item) => {
+    const type = String(item["Type"] || "").trim().toLowerCase();
+    if (!type.includes("follow") || !type.includes("condition")) return;
+
+    const status = String(
+      item["Status"] ||
+      item["Follow-up Status"] ||
+      item["Followup Status"] ||
+      deriveStatusFromType(item["Type"]) ||
+      ""
+    ).trim();
+    const value = String(item["Value"] || "").trim();
+    const explicitFieldLabel = String(item["Field Label"] || item["Label"] || item["Field"] || "").trim();
+
+    if (explicitFieldLabel && status) {
+      if (!byStatus[status]) byStatus[status] = [];
+      const fieldTypeRaw = String(item["Field Type"] || "text").trim().toLowerCase();
+      const allowedTypes = ["text", "number", "url", "date", "select", "textarea"];
+      byStatus[status].push({
+        name: explicitFieldLabel,
+        key: normalizeKey(explicitFieldLabel),
+        label: explicitFieldLabel,
+        type: allowedTypes.includes(fieldTypeRaw) ? fieldTypeRaw : "text",
+        required: parseBoolean(item["Required"] || item["Is Required"] || ""),
+        placeholder: String(item["Placeholder"] || "").trim(),
+        options: parseOptionList(item["Options"] || item["Option List"] || "")
+      });
+      return;
+    }
+
+    if (!status || !value) return;
+    byStatus[status] = value.split(/[|,]/).map((s) => s.trim()).filter(Boolean).map((fieldLabel) => ({
+      name: fieldLabel,
+      key: normalizeKey(fieldLabel),
+      label: fieldLabel,
+      type: "text",
+      required: true,
+      placeholder: "",
+      options: []
+    }));
+  });
+
+  const normalized = {};
+  Object.keys(byStatus).forEach((status) => {
+    const dedupe = new Map();
+    byStatus[status].forEach((field) => {
+      if (field && field.key && !dedupe.has(field.key)) dedupe.set(field.key, field);
+    });
+    normalized[status] = Array.from(dedupe.values());
+  });
+  return normalized;
+}
+
+function createConditionalFieldMarkup(field) {
+  const requiredAttr = field.required ? "required" : "";
+  const requiredMark = field.required ? " *" : "";
+  const placeholderAttr = field.placeholder ? `placeholder="${escapeHtml(field.placeholder)}"` : "";
+  const id = `cf_${field.key}`;
+
+  if (field.type === "textarea") {
+    return `<div><label for="${id}">${escapeHtml(field.label)}${requiredMark}</label><textarea id="${id}" data-cf-key="${field.key}" data-cf-name="${escapeHtml(field.name)}" ${requiredAttr} ${placeholderAttr}></textarea></div>`;
+  }
+  if (field.type === "select") {
+    const opts = field.options.map((o) => `<option value="${escapeHtml(o)}">${escapeHtml(o)}</option>`).join("");
+    return `<div><label for="${id}">${escapeHtml(field.label)}${requiredMark}</label><select id="${id}" data-cf-key="${field.key}" data-cf-name="${escapeHtml(field.name)}" ${requiredAttr}><option value="">Select ${escapeHtml(field.label)}</option>${opts}</select></div>`;
+  }
+  return `<div><label for="${id}">${escapeHtml(field.label)}${requiredMark}</label><input type="${field.type}" id="${id}" data-cf-key="${field.key}" data-cf-name="${escapeHtml(field.name)}" ${requiredAttr} ${placeholderAttr} /></div>`;
+}
+
+function renderConditionalLeadFields(status) {
+  if (!conditionalLeadFields) return;
+  const fields = conditionalFieldsByStatus[status] || [];
+  if (!fields.length) {
+    conditionalLeadFields.innerHTML = "";
+    return;
+  }
+  const fieldsMarkup = fields.map((field) => createConditionalFieldMarkup(field)).join("");
+  conditionalLeadFields.innerHTML = `<div class="profile-section"><h3 class="profile-section-title">Additional details for ${escapeHtml(status)}</h3><div class="form-grid">${fieldsMarkup}</div></div>`;
+}
+
+function collectConditionalLeadFieldValues() {
+  const values = {};
+  if (!conditionalLeadFields) return values;
+  conditionalLeadFields.querySelectorAll("[data-cf-key]").forEach((el) => {
+    const name = el.getAttribute("data-cf-name") || el.getAttribute("data-cf-key");
+    const value = String(el.value || "").trim();
+    if (name && value) values[name] = value;
+  });
+  return values;
+}
+
+function validateConditionalLeadFields() {
+  const errors = [];
+  if (!conditionalLeadFields) return errors;
+  conditionalLeadFields.querySelectorAll("[data-cf-key]").forEach((el) => {
+    const label = el.getAttribute("data-cf-name") || "Field";
+    const value = String(el.value || "").trim();
+    const required = el.hasAttribute("required");
+    const type = el.getAttribute("type") || el.tagName.toLowerCase();
+    let invalid = false;
+    if (required && !value) { errors.push(`${label} is required.`); invalid = true; }
+    if (!invalid && value && type === "number" && isNaN(Number(value))) { errors.push(`${label} must be a valid number.`); invalid = true; }
+    if (!invalid && value && type === "url") {
+      try { new URL(value); } catch (_e) { errors.push(`${label} must be a valid URL.`); invalid = true; }
+    }
+    el.classList.toggle("is-invalid", invalid);
+  });
+  return errors;
+}
+
+if (statusSelect) {
+  statusSelect.addEventListener("change", () => renderConditionalLeadFields(statusSelect.value));
+}
 
 function validateLeadForm() {
   const customerNameInput = document.getElementById("customer_name");
@@ -162,6 +324,9 @@ async function loadMasterData() {
       }
     });
 
+    conditionalFieldsByStatus = extractConditionalConfigFromMaster(data);
+    renderConditionalLeadFields(statusSelect.value);
+
   } catch (error) {
     console.error("Master data load error:", error);
     alert("Failed to load dropdown master data.");
@@ -237,8 +402,12 @@ form.addEventListener("submit", async function (e) {
   const remarks = document.getElementById("remarks").value.trim();
 
   const validation = validateLeadForm();
-  if (!validation.valid) {
-    alert(`Please fix the following before submitting:\n\n- ${validation.errors.join("\n- ")}`);
+  const conditionalErrors = validateConditionalLeadFields();
+  const conditionalValues = collectConditionalLeadFieldValues();
+
+  if (!validation.valid || conditionalErrors.length) {
+    const allErrors = [...validation.errors, ...conditionalErrors];
+    alert(`Please fix the following before submitting:\n\n- ${allErrors.join("\n- ")}`);
     saveLeadBtn.disabled = false;
     saveLeadBtn.innerText = isEditMode ? "Update Lead" : "Save Lead";
     isSubmitting = false;
@@ -348,7 +517,8 @@ form.addEventListener("submit", async function (e) {
       remarks,
       lead_status: "Open",
       order_value: 0,
-      next_followup_date: ""
+      next_followup_date: "",
+      conditional_fields: conditionalValues
     };
 
     const res = await fetch(API_URL, {
