@@ -55,31 +55,11 @@ if (dashboardCards) {
 
 async function loadDashboardData() {
   try {
-    const leadsRes = await fetch(API_URL);
-    const leadsRaw = await leadsRes.json();
+    const leadsRaw = await window.AppDataCache.getResource("leads", {
+      onUpdate: applyDashboardLeads
+    });
 
-    if (!Array.isArray(leadsRaw)) {
-      throw new Error("API did not return an array");
-    }
-
-    leads = leadsRaw.map((lead, index) => ({
-      id: index + 1,
-      lead_id: String(lead["Lead ID"] || ""),
-      date: String(lead["Created Date"] || ""),
-      lead_owner: String(lead["Lead Owner"] || ""),
-      customer_name: String(lead["Customer Name"] || ""),
-      contact_no: String(lead["Contact No."] || ""),
-      email: String(lead["Email ID"] || ""),
-      lead_source: String(lead["Lead Source"] || ""),
-      product_category: String(lead["Product Category"] || ""),
-      status: String(lead["Status"] || ""),
-      remarks: String(lead["Remarks"] || ""),
-      lead_status: String(lead["Lead Status"] || ""),
-      order_value: Number(lead["Order Value"] || 0),
-      next_followup_date: String(lead["Next Follow-up Date"] || "")
-    }));
-
-    renderDashboard();
+    applyDashboardLeads(leadsRaw);
   } catch (error) {
     console.error("Dashboard load error:", error);
 
@@ -87,6 +67,31 @@ async function loadDashboardData() {
       `Failed to load dashboard data. ${error && error.message ? error.message : ""}`.trim()
     );
   }
+}
+
+function applyDashboardLeads(leadsRaw) {
+  if (!Array.isArray(leadsRaw)) {
+    throw new Error("API did not return an array");
+  }
+
+  leads = leadsRaw.map((lead, index) => ({
+    id: index + 1,
+    lead_id: String(lead["Lead ID"] || ""),
+    date: String(lead["Created Date"] || ""),
+    lead_owner: String(lead["Lead Owner"] || ""),
+    customer_name: String(lead["Customer Name"] || ""),
+    contact_no: String(lead["Contact No."] || ""),
+    email: String(lead["Email ID"] || ""),
+    lead_source: String(lead["Lead Source"] || ""),
+    product_category: String(lead["Product Category"] || ""),
+    status: String(lead["Status"] || ""),
+    remarks: String(lead["Remarks"] || ""),
+    lead_status: String(lead["Lead Status"] || ""),
+    order_value: Number(lead["Order Value"] || 0),
+    next_followup_date: String(lead["Next Follow-up Date"] || "")
+  }));
+
+  renderDashboard();
 }
 
 function renderDashboard() {

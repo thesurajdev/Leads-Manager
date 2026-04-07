@@ -294,50 +294,53 @@ async function initPage() {
 // 🔥 Load dropdowns from Master_Data sheet
 async function loadMasterData() {
   try {
-    const res = await fetch(API_URL + "?action=master");
-    const data = await res.json();
-
-    const leadSourceSelect = document.getElementById("lead_source");
-    const productSelect = document.getElementById("product_category");
-    const statusSelect = document.getElementById("status");
-
-    leadSourceSelect.innerHTML = `<option value="">Select Lead Source</option>`;
-    productSelect.innerHTML = `<option value="">Select Product Category</option>`;
-    statusSelect.innerHTML = `<option value="">Select Status</option>`;
-
-    data.forEach(item => {
-      const type = String(item["Type"] || "").trim();
-      const value = String(item["Value"] || "").trim();
-
-      if (!value) return;
-
-      if (type === "Lead Source") {
-        leadSourceSelect.innerHTML += `<option value="${value}">${value}</option>`;
-      }
-
-      if (type === "Product Category") {
-        productSelect.innerHTML += `<option value="${value}">${value}</option>`;
-      }
-
-      if (type === "Status") {
-        statusSelect.innerHTML += `<option value="${value}">${value}</option>`;
-      }
+    const data = await window.AppDataCache.getResource("master", {
+      onUpdate: populateMasterData
     });
 
-    conditionalFieldsByStatus = extractConditionalConfigFromMaster(data);
-    renderConditionalLeadFields(statusSelect.value);
-
+    populateMasterData(data);
   } catch (error) {
     console.error("Master data load error:", error);
     alert("Failed to load dropdown master data.");
   }
 }
 
+function populateMasterData(data) {
+  const leadSourceSelect = document.getElementById("lead_source");
+  const productSelect = document.getElementById("product_category");
+  const statusSelect = document.getElementById("status");
+
+  leadSourceSelect.innerHTML = `<option value="">Select Lead Source</option>`;
+  productSelect.innerHTML = `<option value="">Select Product Category</option>`;
+  statusSelect.innerHTML = `<option value="">Select Status</option>`;
+
+  data.forEach(item => {
+    const type = String(item["Type"] || "").trim();
+    const value = String(item["Value"] || "").trim();
+
+    if (!value) return;
+
+    if (type === "Lead Source") {
+      leadSourceSelect.innerHTML += `<option value="${value}">${value}</option>`;
+    }
+
+    if (type === "Product Category") {
+      productSelect.innerHTML += `<option value="${value}">${value}</option>`;
+    }
+
+    if (type === "Status") {
+      statusSelect.innerHTML += `<option value="${value}">${value}</option>`;
+    }
+  });
+
+  conditionalFieldsByStatus = extractConditionalConfigFromMaster(data);
+  renderConditionalLeadFields(statusSelect.value);
+}
+
 // 🔥 Load existing lead for editing
 async function loadLeadForEdit(leadId) {
   try {
-    const res = await fetch(API_URL);
-    const rawLeads = await res.json();
+    const rawLeads = await window.AppDataCache.getResource("leads");
 
     const lead = rawLeads.find((item) => String(item["Lead ID"]) === String(leadId));
 
@@ -443,6 +446,8 @@ form.addEventListener("submit", async function (e) {
       const result = await res.json();
 
       if (result.success) {
+        window.AppDataCache.invalidate(["leads", "followups"]);
+        window.AppDataCache.prefetch(["leads", "followups", "master"]);
         alert("Lead updated successfully!");
         localStorage.removeItem("editLeadId");
         window.location.href = "leads.html";
@@ -463,8 +468,7 @@ form.addEventListener("submit", async function (e) {
     }
 
     // 🔥 ADD NEW MODE
-    const existingRes = await fetch(API_URL);
-    const existingLeadsRaw = await existingRes.json();
+    const existingLeadsRaw = await window.AppDataCache.getResource("leads");
 
     const existingLeads = existingLeadsRaw.map((lead) => ({
       lead_id: String(lead["Lead ID"] || ""),
@@ -532,6 +536,8 @@ form.addEventListener("submit", async function (e) {
     const result = await res.json();
 
     if (result.success) {
+      window.AppDataCache.invalidate(["leads", "followups"]);
+      window.AppDataCache.prefetch(["leads", "followups", "master"]);
       alert("Lead added successfully!");
       window.location.href = "leads.html";
     } else if (result.duplicate) {

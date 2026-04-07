@@ -200,4 +200,8 @@ document.querySelectorAll(".sidebar-nav a[href]").forEach((a) => {
     // Sidebar is fixed/open by design.
   });
 });
+
+if (window.AppDataCache) {
+  window.AppDataCache.prefetch(["leads", "master", "followups"]);
+}
 })();

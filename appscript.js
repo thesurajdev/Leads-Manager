@@ -16,6 +16,15 @@ function outputJSON(data) {
   function doGet(e) {
     const action = e.parameter.action || "leads";
     const ss = SpreadsheetApp.getActiveSpreadsheet();
+
+    if (action === "meta") {
+      const file = DriveApp.getFileById(ss.getId());
+
+      return outputJSON({
+        spreadsheet_id: ss.getId(),
+        spreadsheet_last_updated: file.getLastUpdated().toISOString()
+      });
+    }
   
     // 🔥 MASTER DATA
     if (action === "master") {

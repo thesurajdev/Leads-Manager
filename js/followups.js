@@ -1,5 +1,4 @@
 let leads = [];
-let followups = [];
 
 const todayFollowupsBody = document.getElementById("todayFollowups");
 const overdueFollowupsBody = document.getElementById("overdueFollowups");
@@ -34,44 +33,11 @@ async function loadData() {
   showFollowupsLoadingState();
 
   try {
-    const leadsRes = await fetch(API_URL);
-    const leadsRaw = await leadsRes.json();
+    const leadsRaw = await window.AppDataCache.getResource("leads", {
+      onUpdate: applyFollowupLeads
+    });
 
-    leads = leadsRaw.map((lead, index) => ({
-      id: index + 1,
-      lead_id: String(lead["Lead ID"] || ""),
-      date: String(lead["Created Date"] || ""),
-      lead_owner: String(lead["Lead Owner"] || ""),
-      customer_name: String(lead["Customer Name"] || ""),
-      contact_no: String(lead["Contact No."] || ""),
-      email: String(lead["Email ID"] || ""),
-      lead_source: String(lead["Lead Source"] || ""),
-      product_category: String(lead["Product Category"] || ""),
-      status: String(lead["Status"] || ""),
-      remarks: String(lead["Remarks"] || ""),
-      lead_status: String(lead["Lead Status"] || ""),
-      order_value: Number(lead["Order Value"] || 0),
-      next_followup_date: String(lead["Next Follow-up Date"] || "")
-    }));
-
-    const followRes = await fetch(API_URL + "?action=followups");
-    const followRaw = await followRes.json();
-
-    followups = followRaw.map((followup) => ({
-      followup_id: String(followup["Followup ID"] || ""),
-      lead_id: String(followup["Lead ID"] || ""),
-      customer_name: String(followup["Customer Name"] || ""),
-      contact_no: String(followup["Contact No."] || ""),
-      followup_date: String(followup["Follow-up Date"] || ""),
-      followup_type: String(followup["Follow-up Type"] || ""),
-      followup_status: String(followup["Follow-up Status"] || ""),
-      remarks: String(followup["Remarks"] || ""),
-      next_followup_date: String(followup["Next Follow-up Date"] || ""),
-      created_by: String(followup["Created By"] || ""),
-      created_timestamp: String(followup["Created Timestamp"] || "")
-    }));
-
-    renderFollowups();
+    applyFollowupLeads(leadsRaw);
 
   } catch (error) {
     console.error("Error loading follow-up data:", error);
@@ -80,6 +46,27 @@ async function loadData() {
     overdueFollowupsBody.innerHTML = `<tr><td colspan="7" class="empty-state">Failed to load follow-ups.</td></tr>`;
     upcomingFollowupsBody.innerHTML = `<tr><td colspan="7" class="empty-state">Failed to load follow-ups.</td></tr>`;
   }
+}
+
+function applyFollowupLeads(leadsRaw) {
+  leads = leadsRaw.map((lead, index) => ({
+    id: index + 1,
+    lead_id: String(lead["Lead ID"] || ""),
+    date: String(lead["Created Date"] || ""),
+    lead_owner: String(lead["Lead Owner"] || ""),
+    customer_name: String(lead["Customer Name"] || ""),
+    contact_no: String(lead["Contact No."] || ""),
+    email: String(lead["Email ID"] || ""),
+    lead_source: String(lead["Lead Source"] || ""),
+    product_category: String(lead["Product Category"] || ""),
+    status: String(lead["Status"] || ""),
+    remarks: String(lead["Remarks"] || ""),
+    lead_status: String(lead["Lead Status"] || ""),
+    order_value: Number(lead["Order Value"] || 0),
+    next_followup_date: String(lead["Next Follow-up Date"] || "")
+  }));
+
+  renderFollowups();
 }
 
 function createRow(lead) {

@@ -354,81 +354,102 @@ async function loadLeadAndFollowups() {
   showLeadDetailLoadingState();
 
   try {
-    const [leadsRes, masterRes] = await Promise.all([
-      fetch(API_URL),
-      fetch(API_URL + "?action=master")
+    const [leadsRaw, masterRaw, followRaw] = await Promise.all([
+      window.AppDataCache.getResource("leads", {
+        onUpdate: (freshLeads) => {
+          leads = mapLeadRecords(freshLeads);
+          refreshLeadDetailView();
+        }
+      }),
+      window.AppDataCache.getResource("master", {
+        onUpdate: (freshMaster) => {
+          masterDataRows = Array.isArray(freshMaster) ? freshMaster : [];
+          conditionalFieldsByStatus = extractConditionalConfigFromMaster(masterDataRows);
+          loadFollowupStatusOptions(masterDataRows);
+        }
+      }),
+      window.AppDataCache.getResource("followups", {
+        onUpdate: (freshFollowups) => {
+          followups = mapFollowupRecords(freshFollowups);
+          if (lead) {
+            renderFollowups();
+            renderTimeline();
+          }
+        }
+      })
     ]);
-    const leadsRaw = await leadsRes.json();
-    const masterRaw = await masterRes.json();
 
     masterDataRows = Array.isArray(masterRaw) ? masterRaw : [];
     conditionalFieldsByStatus = extractConditionalConfigFromMaster(masterDataRows);
     loadFollowupStatusOptions(masterDataRows);
 
-    leads = leadsRaw.map((item, index) => ({
-      id: index + 1,
-      lead_id: String(item["Lead ID"] || ""),
-      date: String(item["Created Date"] || ""),
-      lead_owner: String(item["Lead Owner"] || ""),
-      customer_name: String(item["Customer Name"] || ""),
-      contact_no: String(item["Contact No."] || ""),
-      email: String(item["Email ID"] || ""),
-      lead_source: String(item["Lead Source"] || ""),
-      product_category: String(item["Product Category"] || ""),
-      status: String(item["Status"] || ""),
-      remarks: String(item["Remarks"] || ""),
-      lead_status: String(item["Lead Status"] || ""),
-      order_value: Number(item["Order Value"] || 0),
-      next_followup_date: String(item["Next Follow-up Date"] || "")
-    }));
-
-    lead = leads.find((currentLead) => String(currentLead.id) === String(selectedLeadId));
-
-    if (!lead) {
-      leadDetailBox.innerHTML = "<div class=\"empty-state\">Lead not found.</div>";
-      return;
-    }
-
-    if (
-      userRole !== "Manager" &&
-      userRole !== "Admin" &&
-      lead.lead_owner !== loggedInUser
-    ) {
-      alert("Permission denied. You can only view your own leads.");
-      window.location.href = "leads.html";
-      return;
-    }
-
-    renderLeadDetail();
-
-    if (lead.lead_status !== "Open") {
-      followupForm.style.display = "none";
-    }
-
-    const followRes = await fetch(API_URL + "?action=followups");
-    const followRaw = await followRes.json();
-
-    followups = followRaw.map((followup) => ({
-      followup_id: String(followup["Followup ID"] || ""),
-      lead_id: String(followup["Lead ID"] || ""),
-      customer_name: String(followup["Customer Name"] || ""),
-      contact_no: String(followup["Contact No."] || ""),
-      followup_date: String(followup["Follow-up Date"] || ""),
-      followup_type: String(followup["Follow-up Type"] || ""),
-      followup_status: String(followup["Follow-up Status"] || ""),
-      remarks: String(followup["Remarks"] || ""),
-      next_followup_date: String(followup["Next Follow-up Date"] || ""),
-      created_by: String(followup["Created By"] || ""),
-      created_timestamp: String(followup["Created Timestamp"] || "")
-    }));
-
-    renderFollowups();
-    renderTimeline();
+    leads = mapLeadRecords(leadsRaw);
+    followups = mapFollowupRecords(followRaw);
+    refreshLeadDetailView();
 
   } catch (error) {
     console.error("Error loading lead/followups:", error);
     leadDetailBox.innerHTML = "<div class=\"empty-state\">Failed to load lead details.</div>";
   }
+}
+
+function mapLeadRecords(leadsRaw) {
+  return leadsRaw.map((item, index) => ({
+    id: index + 1,
+    lead_id: String(item["Lead ID"] || ""),
+    date: String(item["Created Date"] || ""),
+    lead_owner: String(item["Lead Owner"] || ""),
+    customer_name: String(item["Customer Name"] || ""),
+    contact_no: String(item["Contact No."] || ""),
+    email: String(item["Email ID"] || ""),
+    lead_source: String(item["Lead Source"] || ""),
+    product_category: String(item["Product Category"] || ""),
+    status: String(item["Status"] || ""),
+    remarks: String(item["Remarks"] || ""),
+    lead_status: String(item["Lead Status"] || ""),
+    order_value: Number(item["Order Value"] || 0),
+    next_followup_date: String(item["Next Follow-up Date"] || "")
+  }));
+}
+
+function mapFollowupRecords(followupsRaw) {
+  return followupsRaw.map((followup) => ({
+    followup_id: String(followup["Followup ID"] || ""),
+    lead_id: String(followup["Lead ID"] || ""),
+    customer_name: String(followup["Customer Name"] || ""),
+    contact_no: String(followup["Contact No."] || ""),
+    followup_date: String(followup["Follow-up Date"] || ""),
+    followup_type: String(followup["Follow-up Type"] || ""),
+    followup_status: String(followup["Follow-up Status"] || ""),
+    remarks: String(followup["Remarks"] || ""),
+    next_followup_date: String(followup["Next Follow-up Date"] || ""),
+    created_by: String(followup["Created By"] || ""),
+    created_timestamp: String(followup["Created Timestamp"] || "")
+  }));
+}
+
+function refreshLeadDetailView() {
+  lead = leads.find((currentLead) => String(currentLead.id) === String(selectedLeadId));
+
+  if (!lead) {
+    leadDetailBox.innerHTML = "<div class=\"empty-state\">Lead not found.</div>";
+    return;
+  }
+
+  if (
+    userRole !== "Manager" &&
+    userRole !== "Admin" &&
+    lead.lead_owner !== loggedInUser
+  ) {
+    alert("Permission denied. You can only view your own leads.");
+    window.location.href = "leads.html";
+    return;
+  }
+
+  renderLeadDetail();
+  followupForm.style.display = lead.lead_status !== "Open" ? "none" : "grid";
+  renderFollowups();
+  renderTimeline();
 }
 
 function formatDate(dateStr) {
@@ -722,6 +743,8 @@ followupForm.addEventListener("submit", async function (e) {
     const result = await res.json();
 
     if (result.success) {
+      window.AppDataCache.invalidate(["leads", "followups"]);
+      window.AppDataCache.prefetch(["leads", "followups", "master"]);
       alert("Follow-up added successfully!");
       followupForm.reset();
       loadLeadAndFollowups();

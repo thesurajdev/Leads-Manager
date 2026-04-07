@@ -46,32 +46,11 @@ dateTo.addEventListener("change", generateReport);
 
 async function loadLeads() {
   try {
-    const res = await fetch(API_URL);
-    const rawLeads = await res.json();
+    const rawLeads = await window.AppDataCache.getResource("leads", {
+      onUpdate: applyReportLeads
+    });
 
-    leads = rawLeads.map((lead) => ({
-      lead_id: String(lead["Lead ID"] || ""),
-      date: String(lead["Created Date"] || ""),
-      lead_owner: String(lead["Lead Owner"] || ""),
-      customer_name: String(lead["Customer Name"] || ""),
-      contact_no: String(lead["Contact No."] || ""),
-      email: String(lead["Email ID"] || ""),
-      lead_source: String(lead["Lead Source"] || ""),
-      product_category: String(lead["Product Category"] || ""),
-      status: String(lead["Status"] || ""),
-      remarks: String(lead["Remarks"] || ""),
-      lead_status: String(lead["Lead Status"] || ""),
-      order_value: Number(lead["Order Value"] || 0),
-      next_followup_date: String(lead["Next Follow-up Date"] || "")
-    }));
-
-    reportDataReady = true;
-    if (generateReportBtn) {
-      generateReportBtn.disabled = false;
-      generateReportBtn.textContent = generateBtnDefaultText;
-    }
-    generateReport();
-
+    applyReportLeads(rawLeads);
   } catch (error) {
     console.error("Error loading leads for report:", error);
     reportDataReady = false;
@@ -81,6 +60,31 @@ async function loadLeads() {
     }
     reportOutput.innerHTML = `<div class="access-denied"><strong>Report error</strong><p>Failed to load report data.</p></div>`;
   }
+}
+
+function applyReportLeads(rawLeads) {
+  leads = rawLeads.map((lead) => ({
+    lead_id: String(lead["Lead ID"] || ""),
+    date: String(lead["Created Date"] || ""),
+    lead_owner: String(lead["Lead Owner"] || ""),
+    customer_name: String(lead["Customer Name"] || ""),
+    contact_no: String(lead["Contact No."] || ""),
+    email: String(lead["Email ID"] || ""),
+    lead_source: String(lead["Lead Source"] || ""),
+    product_category: String(lead["Product Category"] || ""),
+    status: String(lead["Status"] || ""),
+    remarks: String(lead["Remarks"] || ""),
+    lead_status: String(lead["Lead Status"] || ""),
+    order_value: Number(lead["Order Value"] || 0),
+    next_followup_date: String(lead["Next Follow-up Date"] || "")
+  }));
+
+  reportDataReady = true;
+  if (generateReportBtn) {
+    generateReportBtn.disabled = false;
+    generateReportBtn.textContent = generateBtnDefaultText;
+  }
+  generateReport();
 }
 
 function generateReport() {

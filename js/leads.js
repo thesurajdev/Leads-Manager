@@ -40,37 +40,11 @@ async function loadLeads() {
   showLeadsLoadingState();
 
   try {
-    const res = await fetch(API_URL);
-    const rawLeads = await res.json();
+    const rawLeads = await window.AppDataCache.getResource("leads", {
+      onUpdate: applyLeadsData
+    });
 
-    leads = rawLeads.map((lead, index) => ({
-      id: index + 1,
-      lead_id: String(lead["Lead ID"] || ""),
-      date: String(lead["Created Date"] || ""),
-      lead_owner: String(lead["Lead Owner"] || ""),
-      customer_name: String(lead["Customer Name"] || ""),
-      contact_no: String(lead["Contact No."] || ""),
-      email: String(lead["Email ID"] || ""),
-      lead_source: String(lead["Lead Source"] || ""),
-      product_category: String(lead["Product Category"] || ""),
-      status: String(lead["Status"] || ""),
-      remarks: String(lead["Remarks"] || ""),
-      lead_status: String(lead["Lead Status"] || ""),
-      order_value: Number(lead["Order Value"] || 0),
-      next_followup_date: String(lead["Next Follow-up Date"] || "")
-    }));
-
-    if (userRole !== "Manager" && userRole !== "Admin") {
-      leads = leads.filter((lead) => lead.lead_owner === loggedInUser);
-    }
-
-    filteredLeads = [...leads];
-
-    populateFilters();
-    renderLeadInsights(filteredLeads);
-    renderLeads(filteredLeads);
-    attachFilterEvents();
-
+    applyLeadsData(rawLeads);
   } catch (error) {
     console.error("Error loading leads:", error);
     leadsTableBody.innerHTML = `
@@ -79,6 +53,44 @@ async function loadLeads() {
       </tr>
     `;
   }
+}
+
+function applyLeadsData(rawLeads) {
+  leads = rawLeads.map((lead, index) => ({
+    id: index + 1,
+    lead_id: String(lead["Lead ID"] || ""),
+    date: String(lead["Created Date"] || ""),
+    lead_owner: String(lead["Lead Owner"] || ""),
+    customer_name: String(lead["Customer Name"] || ""),
+    contact_no: String(lead["Contact No."] || ""),
+    email: String(lead["Email ID"] || ""),
+    lead_source: String(lead["Lead Source"] || ""),
+    product_category: String(lead["Product Category"] || ""),
+    status: String(lead["Status"] || ""),
+    remarks: String(lead["Remarks"] || ""),
+    lead_status: String(lead["Lead Status"] || ""),
+    order_value: Number(lead["Order Value"] || 0),
+    next_followup_date: String(lead["Next Follow-up Date"] || "")
+  }));
+
+  if (userRole !== "Manager" && userRole !== "Admin") {
+    leads = leads.filter((lead) => lead.lead_owner === loggedInUser);
+  }
+
+  const previousSearch = searchInput.value;
+  const previousStatus = statusFilter.value;
+  const previousSource = sourceFilter.value;
+  const previousProduct = productFilter.value;
+
+  filteredLeads = [...leads];
+
+  populateFilters();
+  statusFilter.value = previousStatus;
+  sourceFilter.value = previousSource;
+  productFilter.value = previousProduct;
+  searchInput.value = previousSearch;
+  applyFilters();
+  attachFilterEvents();
 }
 
 function getLeadPriority(lead) {
@@ -318,6 +330,7 @@ async function reassignLead(leadId, currentOwner) {
 
     if (result.success) {
       alert("Reassigned successfully!");
+      window.AppDataCache.invalidate(["leads", "followups"]);
       loadLeads();
     } else if (result.permission_denied) {
       alert("Permission denied.");
