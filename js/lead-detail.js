@@ -115,6 +115,25 @@ async function loadLeadAndFollowups() {
   }
 }
 
+function formatDate(dateStr) {
+  if (!dateStr) return "-";
+  const date = new Date(dateStr);
+  if (isNaN(date.getTime())) return dateStr;
+  return date.toLocaleDateString('en-IN', { year: 'numeric', month: 'short', day: 'numeric' });
+}
+
+function getStatusColor(status) {
+  const statusMap = {
+    'Won': 'won',
+    'Lost': 'lost',
+    'Negotiation': 'warm',
+    'Interested': 'hot',
+    'No Response': 'cold',
+    'New': 'new'
+  };
+  return statusMap[status] || 'info';
+}
+
 function renderLeadDetail() {
   if (leadSummaryStrip) {
     leadSummaryStrip.innerHTML = `
@@ -125,32 +144,81 @@ function renderLeadDetail() {
       </div>
       <div class="insight-card">
         <strong>Status</strong>
-        <span class="insight-value">${lead.status || "-"}</span>
-        <p>Current commercial status of the lead.</p>
+        <span class="insight-value"><span class="status-pill ${getStatusColor(lead.status)}">${lead.status || "-"}</span></span>
+        <p>Current commercial status.</p>
       </div>
       <div class="insight-card">
         <strong>Owner</strong>
         <span class="insight-value">${lead.lead_owner || "-"}</span>
-        <p>User currently responsible for the lead.</p>
+        <p>Lead responsibility.</p>
       </div>
       <div class="insight-card">
         <strong>Next follow-up</strong>
-        <span class="insight-value">${lead.next_followup_date || "-"}</span>
-        <p>The next scheduled action date on this record.</p>
+        <span class="insight-value">${formatDate(lead.next_followup_date)}</span>
+        <p>Scheduled action date.</p>
       </div>
     `;
   }
 
   leadDetailBox.innerHTML = `
-    <div class="detail-grid">
-      <div class="detail-item"><span class="detail-label">Customer Name</span><span class="detail-value">${lead.customer_name || "-"}</span></div>
-      <div class="detail-item"><span class="detail-label">Contact No.</span><span class="detail-value">${lead.contact_no || "-"}</span></div>
-      <div class="detail-item"><span class="detail-label">Email</span><span class="detail-value">${lead.email || "-"}</span></div>
-      <div class="detail-item"><span class="detail-label">Lead Source</span><span class="detail-value">${lead.lead_source || "-"}</span></div>
-      <div class="detail-item"><span class="detail-label">Product Category</span><span class="detail-value">${lead.product_category || "-"}</span></div>
-      <div class="detail-item"><span class="detail-label">Lead Status</span><span class="detail-value">${lead.lead_status || "-"}</span></div>
-      <div class="detail-item"><span class="detail-label">Created Date</span><span class="detail-value">${lead.date || "-"}</span></div>
-      <div class="detail-item"><span class="detail-label">Remarks</span><span class="detail-value">${lead.remarks || "-"}</span></div>
+    <div class="lead-profile-sections">
+      <div class="profile-section">
+        <h3 class="profile-section-title">Customer Information</h3>
+        <div class="profile-grid">
+          <div class="profile-field">
+            <span class="profile-label">Name</span>
+            <span class="profile-value">${lead.customer_name || "-"}</span>
+          </div>
+          <div class="profile-field">
+            <span class="profile-label">Contact No.</span>
+            <span class="profile-value">${lead.contact_no || "-"}</span>
+          </div>
+          <div class="profile-field">
+            <span class="profile-label">Email</span>
+            <span class="profile-value">${lead.email || "-"}</span>
+          </div>
+        </div>
+      </div>
+
+      <div class="profile-section">
+        <h3 class="profile-section-title">Lead Information</h3>
+        <div class="profile-grid">
+          <div class="profile-field">
+            <span class="profile-label">Source</span>
+            <span class="profile-value">${lead.lead_source || "-"}</span>
+          </div>
+          <div class="profile-field">
+            <span class="profile-label">Product Category</span>
+            <span class="profile-value">${lead.product_category || "-"}</span>
+          </div>
+          <div class="profile-field">
+            <span class="profile-label">Lead Status</span>
+            <span class="profile-value"><span class="status-pill ${getStatusColor(lead.lead_status)}">${lead.lead_status || "-"}</span></span>
+          </div>
+        </div>
+      </div>
+
+      <div class="profile-section">
+        <h3 class="profile-section-title">Timeline & Details</h3>
+        <div class="profile-grid">
+          <div class="profile-field">
+            <span class="profile-label">Created Date</span>
+            <span class="profile-value">${formatDate(lead.date)}</span>
+          </div>
+          <div class="profile-field">
+            <span class="profile-label">Next Follow-up</span>
+            <span class="profile-value">${formatDate(lead.next_followup_date)}</span>
+          </div>
+          <div class="profile-field">
+            <span class="profile-label">Order Value</span>
+            <span class="profile-value">₹ ${lead.order_value || "0"}</span>
+          </div>
+        </div>
+        <div class="profile-field profile-field-full">
+          <span class="profile-label">Remarks</span>
+          <span class="profile-value-text">${lead.remarks || "-"}</span>
+        </div>
+      </div>
     </div>
   `;
 }
